@@ -35,6 +35,7 @@ namespace infra {
 
         bool _initialized;
 
+        // ESP protocol is initialized when needed (lazy initialization)
         void init() {
 
             init_protocol();

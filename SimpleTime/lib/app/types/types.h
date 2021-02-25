@@ -3,11 +3,24 @@
 #define TYPES_H
 
 namespace app{
-namespace types{
     typedef unsigned timestamp;
     typedef unsigned TorqueAngle;
-    typedef unsigned RotorFrequency;
-}; };
+    typedef unsigned int TerminalVoltageMeasurement;
+
+    class TerminalVoltagePoint {
+    private:
+        timestamp _timestamp;
+        TerminalVoltageMeasurement _measurement;
+
+    public:
+        TerminalVoltagePoint(timestamp time, TerminalVoltageMeasurement measurement):
+                _timestamp(time),
+                _measurement(measurement) { }
+
+        timestamp get_timestamp() { return _timestamp;}
+        unsigned int get_measurement() { return _measurement;}
+    };
+};
 
 
 #endif
