@@ -8,42 +8,77 @@
 
 namespace infra {
 
+    struct ConnectionFailed : public std::exception
+    {
+        const char * what () const throw ()
+        {
+            return "Failed to init a connection";
+        }
+    }
+
+
+    void init_protocol () {
+
+        WiFi.mode(WIFI_STA);
+
+        if (esp_now_init() != ESP_OK) {
+            throw ConnectionFailed;
+        }
+    }
+
+
+    static const uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
     template< typename PayloadType >
-    class Protocol {
-        public:
+    class ESPNowTransmitter {
+    private:
 
-        Protocol() {
-            uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        bool _initialized;
 
-            // Set device as a Wi-Fi Station
-            WiFi.mode(WIFI_STA);
+        void init() {
 
-            // Init ESP-NOW
-            if (esp_now_init() != ESP_OK) {
-                Serial.println("Error` initializing ESP-NOW");
-                return;
-            }
-            
-            // Register peer
+            init_protocol();
+
             esp_now_peer_info_t peerInfo;
             memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-            peerInfo.channel = 0;  
+            peerInfo.channel = 0;
             peerInfo.encrypt = false;
-            
-            // Add peer        
+
+            // Add peer
             if (esp_now_add_peer(&peerInfo) != ESP_OK){
-                Serial.println("Failed to add peer");
                 return;
             }
+
+            _initialized = true;
+
         }
 
-        void send_message(infra::Message<PayloadType> message) {
-            uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    public:
 
-            PayloadType payload = message.get_payload();
-            size_t size = message.size();
-            esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &payload, size);
+        ESPNowTransmitter(): _initialized(false) { }
+
+        void send_message(PayloadType payload) {
+            if (!_initialized) {
+                init();
+            }
+
+            esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &payload, sizeof(PayloadType));
         }
+    };
+
+    template< typename PayloadType >
+    class ESPNowReciever {
+        public:
+
+        ESPNowReciever() { }
+
+        void init(std::function<void(const uint8_t * mac, const uint8_t *incomingData, int len)> message_recieved_callback) {
+
+            init_protocol();
+
+            esp_now_register_recv_cb(message_recieved_callback);
+        }
+
     };
 
 };

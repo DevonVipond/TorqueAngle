@@ -3,11 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <vector>
+#include <queue>
 
-#include "..//types/types.h"
+#include "../types/types.h"
 
-namespace Buffer {
+namespace app {
+namespace buffer {
     struct BufferOverflowException : public std::exception
     {
     	const char * what () const throw ()
@@ -16,40 +17,38 @@ namespace Buffer {
         }
     };
     
-    types::timestamp mystamp = 0;
-    
     template< typename T >
     class Buffer {
     private:
-        std::vector<T> _buffer;
-        size_t _capacity;
+        std::queue<T> _buffer;
+        size_t _max_capacity;
     
         void _throw_if_full() {
-            if (_buffer.size() >= _capacity) {
+            if (_buffer.size() >= _max_capacity) {
                 throw BufferOverflowException();
             }
         }
     
-        void _add(T val) {
+        void _push(T val) {
             _throw_if_full();
     
-            _buffer.push_back(val);
+            _buffer.push(val);
         }
     
     public:
     
-        Buffer(size_t capacity): _capacity(capacity), _buffer(capacity, 0) { }
+        Buffer(size_t max_capacity): _max_capacity(capacity), _buffer(capacity, 0) { }
     
-        void add(T val) {
-            _add(val);
-        }
+        void push(T val) { _push(val); }
     
         T pop_front() {
-            return _buffer.pop_front();
+            T front_element = _buffer.front();
+            _buffer.pop();
+
+            return front_element;
         }
-    
     };
     
-}
+}; };
 
 #endif

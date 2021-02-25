@@ -2,12 +2,30 @@
 
 #ifdef programRx
 
-  #include "test/errorRateVsRange/test.h"
+  #include "lib/infra/protocols/espNow/ESPNowProtocol.h"
+
+  infra::ESPNowReciever< PayloadType > reciever;
+
+  void message_recieved_callback(const uint8_t * mac, const uint8_t *incomingData, int len) {
+
+      memcpy(&myData, incomingData, sizeof(myData));
+
+      Serial.println(myData.a);
+  }
 
   void setup() {
-    test::errorRateVsRange::rx::setup();
-  }
-  void loop() {
+
+      Serial.begin(115200);
+
+      try {
+
+          reciever.init(message_recieved_callback);
+
+      } catch (infra::ConnectionFailed &e) {
+
+          Serial.printline(e.what())
+          exit(0);
+      }
   }
 
   #endif
@@ -15,25 +33,32 @@
 #ifdef programTx
 
   #include "lib/infra/protocols/espNow/ESPNowProtocol.h"
-  #include "lib/infra/server/server.h"
-  #include "lib/infra/message/message.h"
 
   typedef unsigned int PayloadType;
+  static const unsigned int DELAY_PERIOD = 3000;
 
-  infra::Server< infra::Protocol< PayloadType>, PayloadType  > server;
+  infra::ESPNowTransmitter< PayloadType > transmitter;
 
-  void setup() { 
+  void setup() {
     Serial.begin(115200);
   }
 
   void loop() {
       static PayloadType counter = 0;
 
-      server.send_message( counter++ );
+      try {
+
+          transmitter.send_message( counter++ );
+
+      } catch (infra::ConnectionFailed &e) {
+
+          Serial.printline(e.what())
+          exit(0);
+      }
 
       Serial.println("sent message!");
       
-      delay(3000);
+      delay(DELAY_PERIOD);
   }
 
 #endif
