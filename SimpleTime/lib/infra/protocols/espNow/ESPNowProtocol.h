@@ -68,10 +68,10 @@ namespace infra {
     };
 
     template< typename PayloadType >
-    class ESPNowReciever {
+    class ESPNowReceiver {
         public:
 
-        ESPNowReciever() { }
+        ESPNowReceiver() { }
 
         void init(std::function<void(const uint8_t * mac, const uint8_t *incomingData, int len)> message_recieved_callback) {
 

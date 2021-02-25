@@ -1,5 +1,4 @@
-#ifndef CALCTORQUEANGLE_H 
-#define CALCTORQUEANGLE_H
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +18,7 @@ timestamp __calculate_time_shift(timestamp t1, timestamp t2) {
 TorqueAngle __calculate_torque_angle(const timestamp& reference_point,
                                      const timestamp& terminal_voltage_peak,
                                      const timestamp& no_load_time_shift) {
-                                     const unsigned int& rotor_frequency) {
+                                     const frequency& rotor_frequency) {
 
     timestamp time_shift = __calculate_time_shift(reference_point, terminal_voltage_peak);
     time_shift = __calculate_time_shift(time_shift, no_load_time_shift);
@@ -63,8 +62,3 @@ TorqueAngle calculate_average_torque_angle(const vector<timestamp> &reference_po
 
     return torque_angle
 }
-
-
-
-
-#endif

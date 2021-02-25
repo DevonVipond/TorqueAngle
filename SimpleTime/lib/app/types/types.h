@@ -5,6 +5,7 @@
 namespace app{
     typedef unsigned timestamp;
     typedef unsigned TorqueAngle;
+    typedef unsigned SensorMeasurement;
     typedef unsigned int TerminalVoltageMeasurement;
 
     class TerminalVoltagePoint {
