@@ -2,7 +2,6 @@
 
 #ifdef programRx
 
-  //#include "lib/infra/rx.h"
   #include "test/errorRateVsRange/test.h"
 
   void setup() {
@@ -15,7 +14,32 @@
 
 #ifdef programTx
 
-  //#include "lib/infra/tx.h"
+  #include "lib/infra/protocols/espNow/ESPNowProtocol.h"
+  #include "lib/infra/server/server.h"
+  #include "lib/infra/message/message.h"
+
+  typedef unsigned int PayloadType;
+
+  infra::Server< infra::Protocol< PayloadType>, PayloadType  > server;
+
+  void setup() { 
+    Serial.begin(115200);
+  }
+
+  void loop() {
+      static PayloadType counter = 0;
+
+      server.send_message( counter++ );
+
+      Serial.println("sent message!");
+      
+      delay(3000);
+  }
+
+#endif
+
+#ifdef testErrorVsDistance
+
   #include "test/errorRateVsRange/test.h"
 
   void setup() {

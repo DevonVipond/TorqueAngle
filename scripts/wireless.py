@@ -1,6 +1,7 @@
 
 import serial
 import sys
+import os
 
 
 def errorRate(lines):
@@ -34,8 +35,14 @@ if __name__ == "__main__":
         print('invalid args')
         exit(1)
 
+
     log_name = sys.argv[1]
     arr= []
+
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    if os.path.isfile(log_name + '.log'):
+        print ('log file exists')
+        exit(1)
 
     try:
 
