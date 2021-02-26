@@ -7,11 +7,11 @@
 namespace infra {
 
     timestamp wait_for_rising_edge() {
-        sensor_measurement prev_measurement = 1;
+        app::digital_measurement prev_measurement = 1;
 
         while (1) {
 
-            auto measurement = digitalRead(app::SENSOR_PIN);
+            app::digital_measurement measurement = digitalRead(app::SENSOR_PIN);
 
             bool is_rising_edge = measurement > prev_measurement;
 

@@ -8,10 +8,10 @@ namespace infra {
 
     timestamp wait_for_next_terminal_voltage_peak() {
         bool prev_rising = false;
-        voltage_measurement prev_measurement = 0;
+        app::analog_measurement prev_measurement = 0;
 
         while (1) {
-            auto measurement = analogRead(app::TERMINAL_VOLTAGE_PIN);
+            app::analog_measurement measurement = analogRead(app::TERMINAL_VOLTAGE_PIN);
 
             bool falling = measurement < prev_measurement;
             if (prev_rising && falling) {
