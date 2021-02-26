@@ -1,10 +1,11 @@
 #ifndef ESP_NOW_PROTOCOL_H
 #define ESP_NOW_PROTOCOL_H
 
+#include <functional>
+
 #include <esp_now.h>
 #include <WiFi.h>
 
-#include "../../message/message.h"
 
 namespace infra {
 
@@ -14,7 +15,7 @@ namespace infra {
         {
             return "Failed to init a connection";
         }
-    }
+    };
 
 
     void init_protocol () {
@@ -22,7 +23,7 @@ namespace infra {
         WiFi.mode(WIFI_STA);
 
         if (esp_now_init() != ESP_OK) {
-            throw ConnectionFailed;
+            throw ConnectionFailed();
         }
     }
 
@@ -73,7 +74,9 @@ namespace infra {
 
         ESPNowReceiver() { }
 
-        void init(std::function<void(const uint8_t * mac, const uint8_t *incomingData, int len)> message_recieved_callback) {
+        void init(void (* message_recieved_callback)( const unsigned char*, const unsigned char*, int ) ) {
+            
+
 
             init_protocol();
 

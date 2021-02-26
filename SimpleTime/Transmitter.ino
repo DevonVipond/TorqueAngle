@@ -1,26 +1,15 @@
+
+#include "lib/app/types/types.h"
 #include "lib/infra/protocols/espNow/ESPNowProtocol.h"
-#include "lib/infra/sensor/read_sensor_data.h"
+#include "lib/infra/sensor/readSenserData.h"
 
-typedef unsigned int PayloadType;
-static const unsigned int DELAY_PERIOD = 0;
+infra::ESPNowTransmitter< app::timestamp > transmitter;
 
-infra::ESPNowTransmitter< PayloadType > transmitter;
+void loopTransmitter() {
 
-void setup() {
-}
-
-void loop() {
     auto rising_edge_timestamp = infra::wait_for_rising_edge();
 
-    try {
-
-        transmitter.send_message( rising_edge_timestamp );
-
-    } catch (infra::ConnectionFailed &e) {
-
-        Serial.printline(e.what())
-        exit(0);
-    }
+    transmitter.send_message( rising_edge_timestamp );
 
     //delay(DELAY_PERIOD);
 }

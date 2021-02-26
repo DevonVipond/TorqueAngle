@@ -6,7 +6,7 @@
 
 namespace infra {
 
-    timestamp wait_for_next_terminal_voltage_peak() {
+    app::timestamp wait_for_next_terminal_voltage_peak() {
         bool prev_rising = false;
         app::analog_measurement prev_measurement = 0;
 

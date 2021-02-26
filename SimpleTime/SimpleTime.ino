@@ -1,4 +1,11 @@
-#define programTx
+#define none
+
+#ifdef none
+
+void setup() {}
+void loop() {}
+
+#endif
 
 #ifdef programRx
 
@@ -23,8 +30,7 @@
 
       } catch (infra::ConnectionFailed &e) {
 
-          Serial.printline(e.what())
-          exit(0);
+          Serial.println(e.what())
       }
   }
 
@@ -46,15 +52,8 @@
   void loop() {
       static PayloadType counter = 0;
 
-      try {
+      transmitter.send_message( counter++ );
 
-          transmitter.send_message( counter++ );
-
-      } catch (infra::ConnectionFailed &e) {
-
-          Serial.printline(e.what())
-          exit(0);
-      }
 
       Serial.println("sent message!");
       

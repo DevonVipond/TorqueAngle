@@ -6,19 +6,20 @@
 #include <algorithm>
 
 #include "../types/types.h"
+#include "helpers/calculateRotorFrequency.h"
 
 using namespace std;
 
 namespace app {
 
-    TorqueAngle __calculate_torque_angle(const timestamp &reference_point, const timestamp &terminal_voltage_peak,
+    TorqueAngle __calculate_torque_angle(const timestamp &reference_point,    const timestamp &terminal_voltage_peak,
                                          const timestamp &no_load_time_shift, const frequency &rotor_frequency) {
 
         timestamp time_shift = __calculate_time_shift(reference_point, terminal_voltage_peak);
 
         time_shift = __calculate_time_shift(time_shift, no_load_time_shift);
 
-        TorqueAngle torque_angle = 360 * time_diff * rotor_frequency;
+        TorqueAngle torque_angle = 360 * time_shift * rotor_frequency;
 
         return torque_angle;
     }
@@ -35,11 +36,11 @@ namespace app {
             timestamp reference = reference_points[i];
             timestamp peak_terminal_voltage = peak_terminal_voltage_points[i];
 
-            sum_torque_angles = __calculate_torque_angle(reference, peak_terminal_voltage, no_load_time_diff);
+            sum_torque_angles = __calculate_torque_angle(reference, peak_terminal_voltage, no_load_time_diff, rotor_frequency);
         }
 
         auto torque_angle = sum_torque_angles / max_iteration;
 
-        return torque_angle
+        return torque_angle;
     }
 }

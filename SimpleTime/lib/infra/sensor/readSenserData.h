@@ -6,7 +6,7 @@
 
 namespace infra {
 
-    timestamp wait_for_rising_edge() {
+    app::timestamp wait_for_rising_edge() {
         app::digital_measurement prev_measurement = 1;
 
         while (1) {

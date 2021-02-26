@@ -5,7 +5,7 @@
 
 namespace infra {
 
-    timestamp get_current_time() {
+    app::timestamp get_current_time() {
         return micros() - app::AVERAGE_EXECUTION_TIME_OF_MICROS;
     }
 
