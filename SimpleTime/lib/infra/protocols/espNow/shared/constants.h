@@ -1,0 +1,7 @@
+#pragma once
+
+namespace infra {
+
+    static const uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+}

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "lib/app/types/types.h"
-#include "lib/infra/protocols/espNow/ESPNowProtocol.h"
+#include "lib/infra/protocols/espNow/espNowReciever.h"
 #include "lib/infra/sensor/readSenserData.h"
 #include "lib/infra/terminalVoltage/readTerminalVoltage.h"
 #include "lib/app/torqueAngle/calculateTorqueAngle.h"
@@ -70,7 +70,6 @@ void setupReciever()
                 std::unique_lock<std::mutex> lock(terminal_voltage_mutex);
 
                 terminal_voltage_buffer.push_back(time);
-
             }
         }
     }));

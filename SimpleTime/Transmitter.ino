@@ -1,6 +1,6 @@
 
 #include "lib/app/types/types.h"
-#include "lib/infra/protocols/espNow/ESPNowProtocol.h"
+#include "lib/infra/protocols/espNow/espNowTransmitter.h"
 #include "lib/infra/sensor/readSenserData.h"
 
 infra::ESPNowTransmitter< app::timestamp > transmitter;

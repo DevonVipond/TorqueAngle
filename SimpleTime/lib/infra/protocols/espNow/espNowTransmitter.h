@@ -1,34 +1,14 @@
-#ifndef ESP_NOW_PROTOCOL_H
-#define ESP_NOW_PROTOCOL_H
 
-#include <functional>
+#pragma once
+
+#include "shared/constants.h"
+#include "shared/initProtocol.h"
 
 #include <esp_now.h>
 #include <WiFi.h>
 
 
 namespace infra {
-
-    struct ConnectionFailed : public std::exception
-    {
-        const char * what () const throw ()
-        {
-            return "Failed to init a connection";
-        }
-    };
-
-
-    void init_protocol () {
-
-        WiFi.mode(WIFI_STA);
-
-        if (esp_now_init() != ESP_OK) {
-            throw ConnectionFailed();
-        }
-    }
-
-
-    static const uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     template< typename PayloadType >
     class ESPNowTransmitter {
@@ -68,23 +48,4 @@ namespace infra {
         }
     };
 
-    template< typename PayloadType >
-    class ESPNowReceiver {
-        public:
-
-        ESPNowReceiver() { }
-
-        void init(void (* message_recieved_callback)( const unsigned char*, const unsigned char*, int ) ) {
-            
-
-
-            init_protocol();
-
-            esp_now_register_recv_cb(message_recieved_callback);
-        }
-
-    };
-
 };
-
-#endif
