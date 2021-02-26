@@ -36,7 +36,7 @@ namespace app {
             timestamp reference = reference_points[i];
             timestamp peak_terminal_voltage = peak_terminal_voltage_points[i];
 
-            sum_torque_angles = __calculate_torque_angle(reference, peak_terminal_voltage, no_load_time_diff, rotor_frequency);
+            sum_torque_angles += __calculate_torque_angle(reference, peak_terminal_voltage, no_load_time_diff, rotor_frequency);
         }
 
         auto torque_angle = sum_torque_angles / max_iteration;
