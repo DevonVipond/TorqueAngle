@@ -14,7 +14,7 @@ def errorRate(lines):
     
     print ('we got this much errors: ', errors , ' for this many lines: ', len(lines))
     
-    error_rate = 100.0 * (float(errors) / float(len(lines)))
+    error_rate = 100.0 * (float(errors) / float(lines[-1] - lines[0])
 
     return "error rate: " + str(error_rate)
 
