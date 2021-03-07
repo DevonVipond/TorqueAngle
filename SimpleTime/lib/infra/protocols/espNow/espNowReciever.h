@@ -14,8 +14,6 @@ namespace infra {
     class ESPNowReceiver {
         public:
 
-        static bool initialized = false;
-
         ESPNowReceiver() { }
 
         void init(void (* message_recieved_callback)( const unsigned char*, const unsigned char*, int ) ) {

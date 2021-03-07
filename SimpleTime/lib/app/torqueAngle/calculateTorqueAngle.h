@@ -11,7 +11,7 @@
 using namespace std;
 
 namespace app {
-    static const MAX_TORQUE_ANGLE = 90;
+    static const unsigned int MAX_TORQUE_ANGLE = 90;
 
     TorqueAngle __calculate_torque_angle(const timestamp &reference_point,    queue < timestamp > &terminal_voltage_zero_crossings,
                                          const timestamp &no_load_time_shift, const frequency &rotor_frequency) {
@@ -21,7 +21,7 @@ namespace app {
         while (terminal_voltage_zero_crossings.size()) {
             app::timestamp zero_crossing = terminal_voltage_zero_crossings.front(); terminal_voltage_zero_crossings.pop();
 
-            time_shift = __calculate_time_shift(reference_point, terminal_voltage_peak);
+            time_shift = __calculate_time_shift(reference_point, zero_crossing);
 
             time_shift = __calculate_time_shift(time_shift, no_load_time_shift);
 
@@ -53,7 +53,7 @@ namespace app {
             timestamp reference = reference_points.front(); reference_points.pop();
             timestamp zero_crossing = terminal_voltage_zero_crossings.front(); reference_points.pop();
 
-            auto torque_angle += __calculate_torque_angle(reference, zero_crossing, no_load_time_diff, rotor_frequency);
+            auto torque_angle = __calculate_torque_angle(reference, terminal_voltage_zero_crossings, no_load_time_diff, rotor_frequency);
 
             if (torque_angle) {
                 sum_torque_angles += torque_angle;

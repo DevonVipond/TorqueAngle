@@ -10,7 +10,7 @@ namespace infra {
 
     app::timestamp get_current_time() {
 
-        long int curr_time = static_cast<long int> (micros()) + Globals::instance()->g_clock_offset;
+        long int curr_time = static_cast<long int> (micros()) + g_clock_offset;
 
         return static_cast<app::timestamp> (curr_time);
     }

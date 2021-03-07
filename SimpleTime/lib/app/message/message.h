@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/app/types/types.h"
+#include "../types/types.h"
 
 namespace app {
 
@@ -9,6 +9,16 @@ namespace app {
         app::MESSAGE_TYPE message_type;
         
     } ;
+
+    message __message(app::timestamp payload, app::CURRENT_MODE mode) {
+
+        message m;
+
+        m.payload = payload;
+        m.message_type = mode;
+
+        return m;
+    }
 
     message sync_clock_message (app::timestamp new_clock_time) {
 
@@ -20,29 +30,20 @@ namespace app {
         return __message(current_time, app::ROUND_TRIP_MSG);
     }
 
-    message enter_sync_clocks_mode_message(){
+    message enter_sync_clocks_mode_message() {
 
-        return __message(0, app::SYNC_CLOCKS_MODE_MSG);
+        return __message(0, app::ENTER_SYNC_CLOCKS_MODE_MSG);
     }
 
-    message enter_torque_angle_mode_message(){
+    message enter_torque_angle_mode_message() {
 
         return __message(0, app::ENTER_TORQUE_ANGLE_MODE_MSG);
     }
 
-    message sensor_timestamp_message(app::timestamp rising_edge_timestamp){
+    message sensor_timestamp_message(app::timestamp rising_edge_timestamp) {
 
         return __message(rising_edge_timestamp, app::SENSOR_TIMESTAMP_MSG);
     }
 
-    message __message(app::timestamp payload, app::CURRENT_MODE mode) {
-
-        messsage m;
-
-        m.payload = payload;
-        m.message_type = mode;
-
-        return m;
-    }
 
 }

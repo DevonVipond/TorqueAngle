@@ -1,11 +1,12 @@
+#pragma once
 
 #include <queue>
 
-#include "lib/app/types/types.h"
-#include "lib/app/message/message.h"
-#include "lib/infra/protocols/espNow/espNowTransmitter.h"
-#include "lib/infra/protocols/espNow/espNowReciever.h"
-#include "lib/infra/sensor/readSenserData.h"
+#include "app/types/types.h"
+#include "app/message/message.h"
+#include "infra/protocols/espNow/espNowTransmitter.h"
+#include "infra/protocols/espNow/espNowReciever.h"
+#include "infra/sensor/readSenserData.h"
 
 namespace transmiter {
 

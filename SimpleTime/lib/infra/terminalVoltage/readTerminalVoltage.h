@@ -21,7 +21,6 @@ namespace infra {
             prev_measurement = measurement;
             prev_rising = measurement > prev_measurement;
 
-            delayMicroseconds(app::ANALOG_SAMPLING_RATE_MICROSECONDS);
 
         }
     }

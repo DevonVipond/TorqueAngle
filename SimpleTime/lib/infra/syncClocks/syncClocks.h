@@ -132,7 +132,7 @@ namespace infra {
 
             for (int i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++) {
 
-                _transmitter.send_message( enter_torque_angle_mode() );
+                _transmitter.send_message( app::enter_torque_angle_mode_message() );
 
             }
 

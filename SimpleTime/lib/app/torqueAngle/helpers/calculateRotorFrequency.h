@@ -6,7 +6,7 @@
 #include "calculateTimeShift.h"
 
 namespace app {
-    frequency__calculate_rotor_frequency(std::queue<timestamp>& peak_terminal_voltage_points) {
+    frequency __calculate_rotor_frequency(std::queue<timestamp>& peak_terminal_voltage_points) {
         // TODO: PROPERLY IMPLEMENT
         return 3600;
 

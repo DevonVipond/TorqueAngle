@@ -1,18 +1,20 @@
+#pragma once
 
 #include <queue>
 #include <memory>
 
-#include "lib/app/types/types.h"
-#include "lib/app/globalVariables/globalVariables.h"
-#include "lib/app/message/message.h"
-#include "lib/infra/protocols/espNow/espNowReciever.h"
-#include "lib/infra/protocols/espNow/espNowTransmitter.h"
-#include "lib/infra/sensor/readSenserData.h"
-#include "lib/infra/terminalVoltage/readTerminalVoltage.h"
-#include "lib/app/torqueAngle/calculateTorqueAngle.h"
-#include "lib/infra/syncClocks/syncClocks.h"
+#include "app/types/types.h"
+#include "app/globalVariables/globalVariables.h"
+#include "app/message/message.h"
+#include "infra/protocols/espNow/espNowReciever.h"
+#include "infra/protocols/espNow/espNowTransmitter.h"
+#include "infra/sensor/readSenserData.h"
+#include "infra/terminalVoltage/readTerminalVoltage.h"
+#include "app/torqueAngle/calculateTorqueAngle.h"
+#include "infra/syncClocks/syncClocks.h"
 
-namespace reciever {
+namespace receiver {
+
 infra::ESPNowReceiver<app::message> receiver;
 infra::ESPNowTransmitter< app::message > transmitter;
 
@@ -34,7 +36,7 @@ void display_torque_angle(app::TorqueAngle torque_angle) {
 
 void update_torque_angle() {
 
-    auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_buffer, no_load_time_shift);
+    auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_zero_crossings_buffer, no_load_time_shift);
 
     while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
     while (receiver_buffer.size()) receiver_buffer.pop();
@@ -44,27 +46,29 @@ void update_torque_angle() {
 
 void zero_torque_angle(app::timestamp no_load_time_shift) {
 
-    Globals::instance()->g_no_load_time_shift = no_load_time_shift;
+    no_load_time_shift = no_load_time_shift;
 
 }
 
 void set_clock_offset(const app::timestamp &transmitter_clock) {
 
-    Globals::instance()->g_clock_offset = static_cast<long int>(transmitter_clock) - static_cast<long int>(get_current_time());
+    g_clock_offset = static_cast<long int>(transmitter_clock) - static_cast<long int>(get_current_time());
+    Serial.print("clock syncd w offset: ");
+    Serial.println(g_clock_offset);
 
 }
 
 std::string msg_type_to_string(app::MESSAGE_TYPE type) {
     switch (type) {
-        case: app::ENTER_SYNC_CLOCKS_MODE_MSG:
+        case app::ENTER_SYNC_CLOCKS_MODE_MSG:
             return "ENTER_SYNC_CLOCKS_MODE_MSG";
-        case: app::ENTER_TORQUE_ANGLE_MODE_MSG 
+        case app::ENTER_TORQUE_ANGLE_MODE_MSG:
             return "ENTER_TORQUE_ANGLE_MODE_MSG";
-        case: app::ROUND_TRIP_MSG             
+        case app::ROUND_TRIP_MSG:             
             return "ROUND_TRIP_MSG";
-        case: app::SYNC_CLOCK_MSG             
+        case app::SYNC_CLOCK_MSG:            
             return "SYNC_CLOCK_MSG";
-        case: app::SENSOR_TIMESTAMP_MSG
+        case app::SENSOR_TIMESTAMP_MSG:
             return "SENSOR_TIMESTAMP_MSG";
     }
 
@@ -74,7 +78,7 @@ std::string msg_type_to_string(app::MESSAGE_TYPE type) {
 void message_handler(app::message & msg) {
     Serial.print("received msg:");
     Serial.print(msg.payload);
-    Serial.println(msg_type_to_string(msg.message_type));
+    //Serial.println(msg_type_to_string(msg.message_type));
 
     switch (msg.message_type) {
         case app::ENTER_SYNC_CLOCKS_MODE_MSG:
@@ -129,8 +133,6 @@ void message_received_callback(const uint8_t *mac, const uint8_t *incomingData, 
 }
 
 void setupReciever() {
-
-    g_clock_offset = 0;
 
     Serial.begin(115200);
 
