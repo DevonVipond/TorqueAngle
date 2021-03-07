@@ -6,7 +6,7 @@
 
 namespace infra {
 
-    app::timestamp wait_for_next_terminal_voltage_peak(pad_watchdog=false) {
+    app::timestamp wait_for_next_terminal_voltage_peak( ){
         bool prev_rising = false;
         app::analog_measurement prev_measurement = 0;
 
@@ -23,10 +23,6 @@ namespace infra {
 
             delayMicroseconds(app::ANALOG_SAMPLING_RATE_MICROSECONDS);
 
-            if (pad_watchdog) {
-                //yield();
-                esp_task_wdt_feed();
-            }
         }
     }
 }

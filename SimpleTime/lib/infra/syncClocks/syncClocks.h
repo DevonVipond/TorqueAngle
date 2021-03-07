@@ -8,8 +8,8 @@
 
 namespace infra {
 
-    template< typename Protocol >
-    class SyncClocksTransmitter {
+    template< typename Receiver, typename Transmitter >
+    class SyncClocks {
 
         public:
 
@@ -19,12 +19,14 @@ namespace infra {
         static const app::timestamp TRANSMISSION_DELAY = 200;
         static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 2000;
 
-        Protocol &_protocol;
+        Receiver &_receiver;
+        Transmitter &_transmitter;
         std::queue<app::timestamp> &_receiver_buffer;
 
         SyncClocks() = delete;
-        SyncClocks(Protocol &protocol, std::queue<app::timestamp> &receiver_buffer):
-            _protocol(protocol),
+        SyncClocks(Receiver &receiver, Transmitter &transmitter, std::queue<app::timestamp> &receiver_buffer):
+            _receiver(receiver),
+            _transmitter(transmitter),
             _receiver_buffer(receiver_buffer) { }
 
         void start(){
@@ -46,8 +48,8 @@ namespace infra {
             app::timestamp start_time;
             app::timestamp end_time;
 
-            RoundTrip( app::timestamp start_time, app::timestamp end_time):
-                start_time(start_time), end_time(end_time);
+            RoundTrip( app::timestamp start_time, app::timestamp end_time ):
+                start_time(start_time), end_time(end_time) {};
         };
 
 
@@ -55,7 +57,7 @@ namespace infra {
 
             for (int i= 0; i < NUMBER_SYNC_CLOCK_MESSAGES; i++) {
 
-                protocol.send_message(INITIATE_CLOCK_SYNC_MODE);
+                _transmitter.send_message(INITIATE_CLOCK_SYNC_MODE_MESSAGE);
 
                 delay(TRANSMISSION_DELAY);
 
@@ -64,7 +66,7 @@ namespace infra {
             // Assume reciever is now in sync clock mode
         }
 
-        void calculate_trip_time() {
+        app::timestamp calculate_trip_time() {
 
             std::vector<RoundTrip> times;
             int no_failure = 0;
@@ -73,7 +75,7 @@ namespace infra {
                 
                 auto start_time = get_current_time();
 
-                protocol.send_message(start_time);
+                _transmitter.send_message(start_time);
 
                 app::timestamp response = wait_for_response();
                 app::timestamp end_time = get_current_time();
@@ -83,13 +85,13 @@ namespace infra {
                     continue;
                 }
 
-                times.push_back(RoundTrip(start_time, end_time))
+                times.push_back(RoundTrip(start_time, end_time));
 
                 delay(TRANSMISSION_DELAY);
             }
 
             if (no_failure == NUMBER_SYNC_CLOCK_MESSAGES) {
-                throw std::exception('Unable to sync clocks!');
+                throw std::exception();
             }
 
             return calculate_average_trip_time(times);
@@ -99,12 +101,14 @@ namespace infra {
                 
             auto timeout = get_current_time() + RESPONSE_TIMEOUT_MICROSECONDS;
 
-            _receiver_buffer.clear();
+            while ( _receiver_buffer.size() ) _receiver_buffer.pop();
 
             while ( get_current_time() < timeout ) {
 
                 if (_receiver_buffer.size()) {
-                    return _receiver_buffer.pop();
+                    auto ret = _receiver_buffer.front(); _receiver_buffer.pop();
+
+                    return ret;
                 }
             }
 
@@ -118,7 +122,7 @@ namespace infra {
 
                 app::timestamp current_time = get_current_time();
 
-                _protocol.send_message(current_time + average_trip_time);
+                _transmitter.send_message(current_time + average_trip_time);
 
             }
 
@@ -128,7 +132,7 @@ namespace infra {
 
             for (int i = 0; i < NUMBER_SYNC_CLOCK_MESSAGES; i++) {
 
-                _protocol.send_message(FINISH_CLOCK_SYNC_MODE_MESSAGE);
+                _transmitter.send_message(FINISH_CLOCK_SYNC_MODE_MESSAGE);
 
             }
 
@@ -136,7 +140,7 @@ namespace infra {
 
         app::timestamp calculate_average_trip_time( std::vector<RoundTrip> times){
 
-            app::timstamp sum_trip_time = 0;
+            app::timestamp sum_trip_time = 0;
 
             for (const auto time : times) {
 
