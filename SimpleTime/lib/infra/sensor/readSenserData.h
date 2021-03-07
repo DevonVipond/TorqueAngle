@@ -6,12 +6,12 @@
 
 namespace infra {
 
-    app::timestamp wait_for_rising_edge() {
+    app::timestamp wait_for_rising_edge(unsigned int digital_pin) {
         app::digital_measurement prev_measurement = 1;
 
         while (1) {
 
-            app::digital_measurement measurement = digitalRead(app::SENSOR_PIN);
+            app::digital_measurement measurement = digitalRead(digital_pin);
 
             bool is_rising_edge = measurement > prev_measurement;
 
@@ -21,7 +21,7 @@ namespace infra {
 
             prev_measurement = measurement;
 
-            delayMicroseconds(app::ANALOG_SAMPLING_RATE_MICROSECONDS);
+            delayMicroseconds(app::DIGITAL_SAMPLING_DELAY_MICROSECONDS);
         }
     }
 }

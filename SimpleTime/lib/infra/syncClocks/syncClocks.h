@@ -5,6 +5,7 @@
 
 #include "../time/getCurrentTime.h"
 #include "../../app/types/types.h"
+#include "../../app/message/message.h"
 
 namespace infra {
 
@@ -13,11 +14,9 @@ namespace infra {
 
         public:
 
-        static const app::timestamp INITIATE_CLOCK_SYNC_MODE_MESSAGE = -1;
-        static const app::timestamp FINISH_CLOCK_SYNC_MODE_MESSAGE = -1;
-        static const app::timestamp NUMBER_SYNC_CLOCK_MESSAGES = 20;
-        static const app::timestamp TRANSMISSION_DELAY = 200;
-        static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 2000;
+        static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 20;
+        static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 60;
+        static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 80000;
 
         Receiver &_receiver;
         Transmitter &_transmitter;
@@ -43,8 +42,8 @@ namespace infra {
         private:
 
         class RoundTrip {
-            public:
 
+            public:
             app::timestamp start_time;
             app::timestamp end_time;
 
@@ -55,11 +54,11 @@ namespace infra {
 
         void initiate_sync_clock_mode() {
 
-            for (int i= 0; i < NUMBER_SYNC_CLOCK_MESSAGES; i++) {
+            for (int i= 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++) {
 
-                _transmitter.send_message(INITIATE_CLOCK_SYNC_MODE_MESSAGE);
+                _transmitter.send_message( app::enter_sync_clocks_mode_message() );
 
-                delay(TRANSMISSION_DELAY);
+                delay(TRANSMISSION_DELAY_MILLISECONDS);
 
             }
 
@@ -71,11 +70,11 @@ namespace infra {
             std::vector<RoundTrip> times;
             int no_failure = 0;
 
-            while (times.size() < NUMBER_SYNC_CLOCK_MESSAGES) {
+            while (times.size() < NUMBER_MESSAGES_TO_TRANSMIT) {
                 
                 auto start_time = get_current_time();
 
-                _transmitter.send_message(start_time);
+                _transmitter.send_message( round_trip_message(start_time) );
 
                 app::timestamp response = wait_for_response();
                 app::timestamp end_time = get_current_time();
@@ -87,12 +86,13 @@ namespace infra {
 
                 times.push_back(RoundTrip(start_time, end_time));
 
-                delay(TRANSMISSION_DELAY);
+                if (no_failure == NUMBER_MESSAGES_TO_TRANSMIT) {
+                    throw std::exception();
+                }
+
+                delay(TRANSMISSION_DELAY_MILLISECONDS);
             }
 
-            if (no_failure == NUMBER_SYNC_CLOCK_MESSAGES) {
-                throw std::exception();
-            }
 
             return calculate_average_trip_time(times);
         }
@@ -118,11 +118,11 @@ namespace infra {
 
         void send_clock_sync_messages(app::timestamp average_trip_time) {
 
-            for (int i = 0; i < NUMBER_SYNC_CLOCK_MESSAGES; i++) {
+            for (int i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++) {
 
                 app::timestamp current_time = get_current_time();
 
-                _transmitter.send_message(current_time + average_trip_time);
+                _transmitter.send_message( app::sync_clock_message( current_time + average_trip_time) );
 
             }
 
@@ -130,9 +130,9 @@ namespace infra {
 
         void finish_clock_sync_mode() {
 
-            for (int i = 0; i < NUMBER_SYNC_CLOCK_MESSAGES; i++) {
+            for (int i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++) {
 
-                _transmitter.send_message(FINISH_CLOCK_SYNC_MODE_MESSAGE);
+                _transmitter.send_message( enter_torque_angle_mode() );
 
             }
 
