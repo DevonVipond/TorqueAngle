@@ -7,5 +7,6 @@ namespace app{
     typedef unsigned int frequency;
     typedef unsigned int digital_measurement; // NOTE: this is a digital sample
     typedef unsigned int analog_measurement; // NOTE: this is a analog sample
+    enum class MODE { SYNC_CLOCKS, NORMAL_OPERATION };
 };
 

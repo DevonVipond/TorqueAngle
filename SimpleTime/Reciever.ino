@@ -1,6 +1,4 @@
-#include <vector>
-#include <mutex>
-#include <thread>
+#include <queue>
 #include <memory>
 
 #include "lib/app/types/types.h"
@@ -8,16 +6,16 @@
 #include "lib/infra/sensor/readSenserData.h"
 #include "lib/infra/terminalVoltage/readTerminalVoltage.h"
 #include "lib/app/torqueAngle/calculateTorqueAngle.h"
+#include "lib/infra/syncClocks/syncClocks.h"
 
 infra::ESPNowReceiver<app::timestamp> receiver;
+infra::ESPNowTransmitter< app::timestamp > transmitter;
 
-std::vector<app::timestamp> receiver_buffer;
-std::vector<app::timestamp> terminal_voltage_buffer;
+std::queue<app::timestamp> receiver_buffer;
+std::queue<app::timestamp> terminal_voltage_buffer;
 
 app::timestamp no_load_time_shift = 0;
 
-std::unique_ptr<std::thread> terminal_voltage_thread;
-std::mutex terminal_voltage_mutex;
 
 struct message
 {
@@ -47,12 +45,9 @@ void message_received_callback(const uint8_t *mac, const uint8_t *incomingData, 
     app::timestamp incomingMessage;
     memcpy(&incomingMessage, incomingData, sizeof(incomingMessage));
 
-    {
-        std::unique_lock<std::mutex> lock(terminal_voltage_mutex);
-        receiver_buffer.push_back(incomingMessage);
+    receiver_buffer.push_back(incomingMessage);
 
-        update_torque_angle();
-    }
+    update_torque_angle();
 }
 
 void setupReciever()
@@ -62,15 +57,26 @@ void setupReciever()
 
     receiver.init(message_received_callback);
 
-    terminal_voltage_thread.reset(new std::thread([&]() {
-        while (1)
-        {
-            auto time = infra::wait_for_next_terminal_voltage_peak();
-            {
-                std::unique_lock<std::mutex> lock(terminal_voltage_mutex);
+}
 
-                terminal_voltage_buffer.push_back(time);
-            }
+void loopReciever() {
+    if (mode = MODE::SYNC_CLOCKS) {
+        if (!receiver_buffer.size()) continue;
+
+        app::timestamp last_recieved_message = receiver_buffer.pop();
+
+        if (last_recieved_message == SyncClocks::FINISH_CLOCK_SYNC_MODE_MESSAGE) {
+            mode = MODE::NORMAL_OPERATION;
+            continue;
         }
-    }));
+
+        transmitter.send_message(last_recieved_message);
+
+    } else {
+
+        auto time = infra::wait_for_next_terminal_voltage_peak();
+
+        terminal_voltage_buffer.push_back(time);
+    }
+
 }

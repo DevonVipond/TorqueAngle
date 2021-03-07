@@ -17,7 +17,6 @@ namespace infra {
         ESPNowReceiver() { }
 
         void init(void (* message_recieved_callback)( const unsigned char*, const unsigned char*, int ) ) {
-            
 
 
             init_protocol();
