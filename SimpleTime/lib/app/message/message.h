@@ -40,7 +40,7 @@ namespace app {
         messsage m;
 
         m.payload = payload;
-        m.mode = mode;
+        m.message_type = mode;
 
         return m;
     }

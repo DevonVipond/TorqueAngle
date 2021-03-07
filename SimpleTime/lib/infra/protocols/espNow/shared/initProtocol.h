@@ -3,6 +3,7 @@
 
 #include <esp_now.h>
 #include <WiFi.h>
+#include "../espNowReciever.h"
 #include "../connectionFailedException.h"
 
 
@@ -10,9 +11,9 @@ namespace infra {
 
 
     void init_protocol () {
-        static bool already_init = false;
+        if (ESPNowReceiver<app::payload>::initialized) return;
 
-        if (already_init) return;
+        ESPNowReceiver<app::payload>::initialized = true;
 
 
         WiFi.mode(WIFI_STA);
