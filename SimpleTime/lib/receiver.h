@@ -41,17 +41,25 @@ void display_torque_angle(app::TorqueAngle torque_angle) {
 void update_torque_angle() {
 
     //auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_zero_crossings_buffer, no_load_time_shift);
-    auto reference_point = receiver_buffer.front(); receiver_buffer.pop();
-    auto torque_angle = app::__calculate_torque_angle(reference_point,
-                                       terminal_voltage_zero_crossings_buffer,
-                                       no_load_time_shift,
-                                       ROTOR_FREQUENCY);
+    try {
+        auto reference_point = receiver_buffer.front(); receiver_buffer.pop();
+        auto torque_angle = app::__calculate_torque_angle(reference_point,
+                                        terminal_voltage_zero_crossings_buffer,
+                                        no_load_time_shift,
+                                        ROTOR_FREQUENCY);
+
+
+        display_torque_angle(torque_angle);
+    } catch (const std::exception& e) {
+
+        Serial.print("Exception in update_torque_angle ");
+        Serial.println(e.what());
+
+    }
 
 
     //while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
     //while (receiver_buffer.size()) receiver_buffer.pop();
-
-    display_torque_angle(torque_angle);
 }
 
 void zero_torque_angle(app::timestamp no_load_time_shift) {
@@ -87,7 +95,7 @@ void zero_torque_angle(app::timestamp no_load_time_shift) {
 
 void message_handler(app::message & msg) {
     Serial.print("rx: received msg:");
-    Serial.print(msg.payload);
+    Serial.println(msg.payload);
     //Serial.println(msg_type_to_string(msg.message_type).c_str());
 
     // TODO delete this:
@@ -157,9 +165,9 @@ void setupReciever() {
         pinMode(app::SENSOR_PIN, INPUT);    
 
 
-    } catch (std::exception e) {
+    } catch (const std::exception &e) {
 
-        Serial.print("EXCEPTION: ");
+        Serial.print("exception in setupReceiver: ");
 
         Serial.println(e.what());
 
@@ -182,8 +190,8 @@ void loopReciever() {
             if ( receiver_buffer.size() )
                 update_torque_angle();
         }
-    } catch (std::exception e) {
-        Serial.print("EXCEPTION: ");
+    } catch (const std::exception &e) {
+        Serial.print("exception in loopReciever: ");
 
         Serial.println(e.what());
 

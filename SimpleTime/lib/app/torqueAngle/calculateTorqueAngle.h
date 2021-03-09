@@ -8,12 +8,20 @@
 #include "../types/types.h"
 #include "helpers/calculateRotorFrequency.h"
 #include "calculationFailedException.h"
+#include "../../infra/logger/logger.h"
 
 using namespace std;
 
 namespace app {
     #define MAX_TORQUE_ANGLE = 90;
     #define MAX_TIME_SHIFT_MICROSECONDS 4000
+    #define MICROSECONDS_IN_MILLISECOND 1000
+
+    app::timestamp convert_microsecond_to_millisecond(const app::timestamp& microsecond_timestmap) {
+
+        return microsecond_timestmap / MICROSECONDS_IN_MILLISECOND;
+
+    }
 
 
     TorqueAngle __calculate_torque_angle(const timestamp &reference_point,    queue < timestamp > &terminal_voltage_zero_crossings,
@@ -37,9 +45,14 @@ namespace app {
 
         }
 
-        if (!found_terminal_voltage_zero_crossing) throw app::CalculationFailed();
+        if (!found_terminal_voltage_zero_crossing) {
+            infra::log("Unable to find terminal voltage zero crossing");
+            throw app::CalculationFailed();
+        } 
 
-        TorqueAngle torque_angle = 360 * time_shift * rotor_frequency;
+        auto time_shift_milliseconds = convert_microsecond_to_millisecond(time_shift);
+
+        TorqueAngle torque_angle = (90.0 / 4.0) * static_cast<double>(time_shift_milliseconds); //* static_cast<double>(rotor_frequency);
 
         return torque_angle;
     }

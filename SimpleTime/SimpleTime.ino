@@ -1,7 +1,7 @@
 #include "lib/receiver.h"
 #include "lib/transmiter.h"
 
-#define tx
+#define rx
 
 void setup() {
 

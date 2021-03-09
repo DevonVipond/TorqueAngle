@@ -64,7 +64,7 @@ void setupTransmitter() {
 
     } catch (std::exception e) {
 
-        Serial.print("EXCEPTION: ");
+        Serial.print("exception in setupTransmitter: ");
 
         Serial.println(e.what());
 
@@ -99,11 +99,11 @@ void loopTransmitter() {
                 transmitter.send_message( app::sensor_timestamp_message(rising_edge_timestamp) );
             }
 
-            delayMicroseconds(30);
+            delayMicroseconds(10);
         //}
 
     } catch (std::exception e) {
-        Serial.print("EXCEPTION: ");
+        Serial.print("exception in loopTransmitter: ");
         Serial.println(e.what());
 
         throw e;
