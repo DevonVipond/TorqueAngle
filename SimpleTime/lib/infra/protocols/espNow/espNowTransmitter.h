@@ -3,6 +3,8 @@
 
 #include "shared/constants.h"
 #include "shared/initProtocol.h"
+#include "connectionFailedException.h"
+#include "../../../infra/logger/logger.h"
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -15,36 +17,50 @@ namespace infra {
     private:
 
         bool _initialized;
+        const uint8_t* _broadcast_addr;
 
         // ESP protocol is initialized when needed (lazy initialization)
-        void init() {
-
-            init_protocol();
+        void __init(const uint8_t *broadcast_addr) {
+            _broadcast_addr = broadcast_addr;
 
             esp_now_peer_info_t peerInfo;
-            memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+            memcpy(peerInfo.peer_addr, broadcast_addr, 6);
             peerInfo.channel = 0;
             peerInfo.encrypt = false;
 
             // Add peer
             if (esp_now_add_peer(&peerInfo) != ESP_OK){
-                return;
+                log("Failed to add peer!");
+                throw ConnectionFailed();
             }
 
             _initialized = true;
 
         }
 
+
     public:
+        void init(const uint8_t* broadcast_addr, void (* message_recieved_callback)( const uint8_t *mac_addr, esp_now_send_status_t status ) ) {
+
+            esp_now_register_send_cb(message_recieved_callback);
+
+            __init(broadcast_addr);
+        }
+
+        void init(const uint8_t *broadcast_addr){
+            __init(broadcast_addr);
+        }
+
 
         ESPNowTransmitter(): _initialized(false) { }
 
         void send_message(PayloadType payload) {
             if (!_initialized) {
-                init();
+                log("transmitter not initialized!");
+                throw ConnectionFailed();
             }
 
-            esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &payload, sizeof(PayloadType));
+            esp_err_t result = esp_now_send(_broadcast_addr, (uint8_t *) &payload, sizeof(PayloadType));
         }
     };
 

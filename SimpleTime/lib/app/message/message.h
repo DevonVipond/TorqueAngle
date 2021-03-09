@@ -5,6 +5,7 @@
 namespace app {
 
     struct message {
+
         app::timestamp payload;
         app::MESSAGE_TYPE message_type;
         

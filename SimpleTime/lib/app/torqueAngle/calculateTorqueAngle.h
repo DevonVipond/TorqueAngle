@@ -7,32 +7,37 @@
 
 #include "../types/types.h"
 #include "helpers/calculateRotorFrequency.h"
+#include "calculationFailedException.h"
 
 using namespace std;
 
 namespace app {
-    static const unsigned int MAX_TORQUE_ANGLE = 90;
+    #define MAX_TORQUE_ANGLE = 90;
+    #define MAX_TIME_SHIFT_MICROSECONDS 4000
+
 
     TorqueAngle __calculate_torque_angle(const timestamp &reference_point,    queue < timestamp > &terminal_voltage_zero_crossings,
                                          const timestamp &no_load_time_shift, const frequency &rotor_frequency) {
         
         timestamp time_shift;
         bool found_terminal_voltage_zero_crossing = false;
-        while (terminal_voltage_zero_crossings.size()) {
+        auto terminal_voltage_buffer_size = terminal_voltage_zero_crossings.size();
+
+        for (size_t i=0; i < terminal_voltage_buffer_size; i++) {
             app::timestamp zero_crossing = terminal_voltage_zero_crossings.front(); terminal_voltage_zero_crossings.pop();
 
             time_shift = __calculate_time_shift(reference_point, zero_crossing);
 
             time_shift = __calculate_time_shift(time_shift, no_load_time_shift);
 
-            if (time_shift < MAX_TORQUE_ANGLE) {
+            if (time_shift < MAX_TIME_SHIFT_MICROSECONDS) {
                 found_terminal_voltage_zero_crossing = true;
                 break;
             }
 
         }
 
-        if (!found_terminal_voltage_zero_crossing) return NULL;
+        if (!found_terminal_voltage_zero_crossing) throw app::CalculationFailed();
 
         TorqueAngle torque_angle = 360 * time_shift * rotor_frequency;
 
@@ -70,4 +75,22 @@ namespace app {
 
         return torque_angle;
     }
+
+    //timestamp find_nearest_zero_crossing(const timestamp& reference_point, queue < timestamp > &terminal_voltage_zero_crossings) {
+    //    while (terminal_voltage_zero_crossings.size()) {
+    //        auto zero_crossing = terminal_voltage_zero_crossings.front(); terminal_voltage_zero_crossings.pop();
+
+    //        auto time_shift = __calculate_time_shift(reference_point, terminal_voltage_zero_crossings);
+
+    //        if (time_shift <= MAX_TIME_SHIFT_MICROSECONDS) {
+
+    //            return zero_crossing;
+
+    //        }
+
+    //    }
+
+    //    throw app::CalculationFailed;
+
+    //}
 }

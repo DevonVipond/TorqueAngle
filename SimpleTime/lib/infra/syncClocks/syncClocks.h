@@ -6,6 +6,7 @@
 #include "../time/getCurrentTime.h"
 #include "../../app/types/types.h"
 #include "../../app/message/message.h"
+#include "../logger/logger.h"
 
 namespace infra {
 
@@ -14,7 +15,7 @@ namespace infra {
 
         public:
 
-        static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 20;
+        static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 10;
         static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 60;
         static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 200000;
 
@@ -30,11 +31,19 @@ namespace infra {
 
         void start(){
 
+            infra::log("starting syncclocks");
+
             initiate_sync_clock_mode();
+
+            infra::log("calculating trip time");
 
             app::timestamp average_trip_time = calculate_trip_time();
 
+            infra::log("sending sync clock message");
+
             send_clock_sync_messages(average_trip_time);
+
+            infra::log("finishing sync clock mode");
 
             finish_clock_sync_mode();
         }
@@ -87,6 +96,7 @@ namespace infra {
                 times.push_back(RoundTrip(start_time, end_time));
 
                 if (no_failure == NUMBER_MESSAGES_TO_TRANSMIT) {
+                    log("failed to calc trip time due to max no error msg's exceeded");
                     throw std::exception();
                 }
 
@@ -133,6 +143,8 @@ namespace infra {
             for (int i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++) {
 
                 _transmitter.send_message( app::enter_torque_angle_mode_message() );
+
+                delay(TRANSMISSION_DELAY_MILLISECONDS);
 
             }
 
