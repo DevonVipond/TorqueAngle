@@ -54,10 +54,10 @@ namespace infra {
         ESPNowTransmitter(): _initialized(false) { }
 
         void send_message(PayloadType payload) {
-            if (!_initialized) {
-                log("ESPNowTransmitter::send_message -> transmitter not initialized!");
-                throw ConnectionFailed();
-            }
+            //if (!_initialized) {
+            //    log("ESPNowTransmitter::send_message -> transmitter not initialized!");
+            //    throw ConnectionFailed();
+            //}
 
             esp_err_t result = esp_now_send(_broadcast_addr, (uint8_t *) &payload, sizeof(PayloadType));
         }

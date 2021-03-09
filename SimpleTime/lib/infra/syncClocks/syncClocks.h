@@ -17,7 +17,7 @@ namespace infra {
 
         static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 10;
         static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 60;
-        static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 60000;
+        static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 600000;
 
         Receiver &_receiver;
         Transmitter &_transmitter;
@@ -84,7 +84,7 @@ namespace infra {
                 
                 auto start_time = get_current_time();
 
-                _transmitter.send_message( round_trip_message(start_time) );
+                _transmitter.send_message( app::round_trip_message(start_time) );
 
                 try {
                     app::timestamp response = wait_for_response();
@@ -95,6 +95,9 @@ namespace infra {
                     }
 
                     app::timestamp end_time = get_current_time();
+
+                    Serial.print("trip time took: ");
+                    Serial.print(end_time - start_time);
 
                     times.push_back(RoundTrip(start_time, end_time));
 

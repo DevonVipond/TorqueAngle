@@ -8,15 +8,15 @@ namespace app{
     typedef unsigned int digital_measurement; // NOTE: this is a digital sample
     typedef unsigned int analog_measurement; // NOTE: this is a analog sample
 
-    typedef bool CURRENT_MODE;
-    static const CURRENT_MODE SYNC_CLOCKS_MODE  = false;
-    static const CURRENT_MODE TORQUE_ANGLE_MODE = true;
+    typedef char CURRENT_MODE;
+    static const CURRENT_MODE SYNC_CLOCKS_MODE  = 'e';
+    static const CURRENT_MODE TORQUE_ANGLE_MODE = 'f';
 
-    typedef short MESSAGE_TYPE;
-    static const MESSAGE_TYPE ENTER_SYNC_CLOCKS_MODE_MSG  = 0;
-    static const MESSAGE_TYPE ENTER_TORQUE_ANGLE_MODE_MSG = 1;
-    static const MESSAGE_TYPE ROUND_TRIP_MSG              = 2;
-    static const MESSAGE_TYPE SYNC_CLOCK_MSG              = 3;
-    static const MESSAGE_TYPE SENSOR_TIMESTAMP_MSG        = 4;
+    typedef char MESSAGE_TYPE;
+    static const MESSAGE_TYPE ENTER_SYNC_CLOCKS_MODE_MSG  = 'a';
+    static const MESSAGE_TYPE ENTER_TORQUE_ANGLE_MODE_MSG = 'b';
+    static const MESSAGE_TYPE ROUND_TRIP_MSG              = 'c';
+    static const MESSAGE_TYPE SYNC_CLOCK_MSG              = 'd';
+    static const MESSAGE_TYPE SENSOR_TIMESTAMP_MSG        = 'e';
 };
 

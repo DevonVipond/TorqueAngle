@@ -13,7 +13,6 @@
 #include "infra/protocols/espNow/shared/constants.h"
 #include "app/torqueAngle/calculateTorqueAngle.h"
 #include "infra/syncClocks/syncClocks.h"
-#define ZERO_CLOCK_PIN 11
 
 namespace receiver {
 
@@ -105,53 +104,52 @@ void message_handler(app::message & msg) {
     Serial.print(msg.payload);
     Serial.print(", type: ");
     Serial.println(msg_type_to_string(msg.message_type).c_str());
+    Serial.println(msg.message_type);
 
-    switch (msg.message_type) {
-        case app::ENTER_SYNC_CLOCKS_MODE_MSG:
+    auto message_type = msg.message_type;
+    if (msg.message_type == app::ENTER_SYNC_CLOCKS_MODE_MSG) {
 
-            mode = app::SYNC_CLOCKS_MODE;
-            while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
-            while (receiver_buffer.size()) receiver_buffer.pop();
-            break;
-        case app::ENTER_TORQUE_ANGLE_MODE_MSG:
+        mode = app::SYNC_CLOCKS_MODE;
+        while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
+        while (receiver_buffer.size()) receiver_buffer.pop();
+    } else if (message_type == app::ENTER_TORQUE_ANGLE_MODE_MSG)  {
 
-            mode = app::TORQUE_ANGLE_MODE;
-            while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
-            while (receiver_buffer.size()) receiver_buffer.pop();
-            break;
-        case app::ROUND_TRIP_MSG:
+        mode = app::TORQUE_ANGLE_MODE;
+        while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
+        while (receiver_buffer.size()) receiver_buffer.pop();
 
-            if (mode != app::SYNC_CLOCKS_MODE) {
-                throw std::exception();
-            }
+    } else if( message_type == app::ROUND_TRIP_MSG) {
 
-            transmitter.send_message( round_trip_message(msg.payload) );
-            break;
-        case app::SYNC_CLOCK_MSG:
-
-            if (mode != app::SYNC_CLOCKS_MODE) {
-                Serial.println("received sync_clock_message when in torque angle mode!");
-                throw std::exception();
-            }
-
-            Serial.print("Syncing clock to: ");
-            Serial.println(msg.payload);
-
-            set_clock_offset(msg.payload);
-
-            break;
-        case app::SENSOR_TIMESTAMP_MSG:
-
-            if (mode != app::TORQUE_ANGLE_MODE) {
-                throw std::exception();
-            }
-
-            receiver_buffer.push(msg.payload);
-            break;
-        default:
-            Serial.println("Unable to handle message");
+        if (mode != app::SYNC_CLOCKS_MODE) {
             throw std::exception();
-    };
+        }
+
+        transmitter.send_message( round_trip_message(msg.payload) );
+
+    } else if( message_type == app::SYNC_CLOCK_MSG) {
+
+        if (mode != app::SYNC_CLOCKS_MODE) {
+            Serial.println("received sync_clock_message when in torque angle mode!");
+            throw std::exception();
+        }
+
+        Serial.print("Syncing clock to: ");
+        Serial.println(msg.payload);
+
+        set_clock_offset(msg.payload);
+
+    } else if( message_type == app::SENSOR_TIMESTAMP_MSG) {
+
+        if (mode != app::TORQUE_ANGLE_MODE) {
+            throw std::exception();
+        }
+
+        receiver_buffer.push(msg.payload);
+    } else {
+
+        Serial.println("Unable to handle message");
+        throw std::exception();
+    }
 
 }
 
@@ -165,52 +163,85 @@ void message_received_callback(const uint8_t *mac, const uint8_t *incomingData, 
 
 void setupReciever() {
 
-    try {
+    Serial.begin(115200);
 
-        Serial.begin(115200);
+    uint8_t broadcastAddress[] = { 0x3c,0x61,0x05,0x3e,0xee,0xa4 };
 
-        infra::init_protocol();
+    WiFi.mode(WIFI_STA);
 
-        transmitter.init(infra::tx_broadcastAddress, message_sent_callback);
-        receiver.init(message_received_callback);
-
-        pinMode(app::SENSOR_PIN, INPUT);    
-
-
-    } catch (const std::exception &e) {
-
-        Serial.print("exception in setupReceiver: ");
-
-        Serial.println(e.what());
-
+    if (esp_now_init() != ESP_OK)
+    {
+        Serial.println("Error initializing ESP-NOW");
         return;
     }
+
+    // Register peer
+    esp_now_peer_info_t peerInfo;
+    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+    peerInfo.channel = 0;
+    peerInfo.encrypt = false;
+
+    // Add peer
+    if (esp_now_add_peer(&peerInfo) != ESP_OK)
+    {
+        Serial.println("Failed to add peer");
+        return;
+    }
+    // Register for a callback function that will be called when data is received
+    esp_now_register_recv_cb(message_received_callback);
+    esp_now_register_send_cb(message_sent_callback);
+
+    //try {
+
+    //    Serial.begin(115200);
+
+    //    infra::init_protocol();
+
+    //    transmitter.init(infra::tx_broadcastAddress, message_sent_callback);
+    //    receiver.init(message_received_callback);
+
+    //    pinMode(app::SENSOR_PIN, INPUT);    
+
+
+    //} catch (const std::exception &e) {
+
+    //    Serial.print("exception in setupReceiver: ");
+
+    //    Serial.println(e.what());
+
+    //    return;
+    //}
 
 }
 
 void loopReciever() {
+    while (1) {
+        try {
 
-    try {
+            if (mode == app::TORQUE_ANGLE_MODE) {
 
-        if (mode == app::TORQUE_ANGLE_MODE) {
+                auto zero_crossing_timestamp = infra::wait_for_rising_edge(app::TERMINAL_VOLTAGE_PIN);
 
-            auto zero_crossing_timestamp = infra::wait_for_rising_edge(app::TERMINAL_VOLTAGE_PIN);
+                terminal_voltage_zero_crossings_buffer.push(zero_crossing_timestamp);
 
-            terminal_voltage_zero_crossings_buffer.push(zero_crossing_timestamp);
+                if ( receiver_buffer.size() )
+                    update_torque_angle();
+            }
+            else {
 
-            if ( receiver_buffer.size() )
-                update_torque_angle();
+                delayMicroseconds(100);
+
+            }
+        } catch (const std::exception &e) {
+            Serial.print("exception in loopReciever: ");
+
+            Serial.println(e.what());
+
+            return;
         }
-        else {
-            delayMicroseconds(100);
-        }
-    } catch (const std::exception &e) {
-        Serial.print("exception in loopReciever: ");
 
-        Serial.println(e.what());
-
-        return;
     }
+
 
 }
 
