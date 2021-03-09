@@ -46,7 +46,7 @@ void display_torque_angle(app::TorqueAngle torque_angle) {
 
 void update_torque_angle() {
 
-    auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_zero_crossings_buffer, no_load_time_shift);
+    //auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_zero_crossings_buffer, no_load_time_shift);
     try {
         auto reference_point = receiver_buffer.front(); receiver_buffer.pop();
         auto torque_angle = app::__calculate_torque_angle(reference_point,
@@ -76,7 +76,8 @@ void zero_torque_angle(app::timestamp no_load_time_shift) {
 
 void set_clock_offset(const app::timestamp &transmitter_clock) {
 
-    g_clock_offset = static_cast<long int>(transmitter_clock) - static_cast<long int>(get_current_time());
+    g_clock_offset = static_cast<long int>(transmitter_clock) - static_cast<long int>(micros());
+
     Serial.print("clock syncd w offset: ");
     Serial.println(g_clock_offset);
 
@@ -100,12 +101,6 @@ std::string msg_type_to_string(app::MESSAGE_TYPE type) {
 }
 
 void message_handler(app::message & msg) {
-    Serial.print("rx: received msg w payload: ");
-    Serial.print(msg.payload);
-    Serial.print(", type: ");
-    Serial.println(msg_type_to_string(msg.message_type).c_str());
-    Serial.println(msg.message_type);
-
     auto message_type = msg.message_type;
     if (msg.message_type == app::ENTER_SYNC_CLOCKS_MODE_MSG) {
 
@@ -133,10 +128,10 @@ void message_handler(app::message & msg) {
             throw std::exception();
         }
 
+        set_clock_offset(msg.payload);
+
         Serial.print("Syncing clock to: ");
         Serial.println(msg.payload);
-
-        set_clock_offset(msg.payload);
 
     } else if( message_type == app::SENSOR_TIMESTAMP_MSG) {
 
@@ -150,6 +145,13 @@ void message_handler(app::message & msg) {
         Serial.println("Unable to handle message");
         throw std::exception();
     }
+
+    Serial.print("rx: received msg w payload: ");
+    Serial.print(msg.payload);
+    Serial.print(", type: ");
+    Serial.println(msg_type_to_string(msg.message_type).c_str());
+    Serial.println(msg.message_type);
+
 
 }
 
@@ -229,7 +231,7 @@ void loopReciever() {
             }
             else {
 
-                delayMicroseconds(100);
+                delayMicroseconds(20);
 
             }
         } catch (const std::exception &e) {

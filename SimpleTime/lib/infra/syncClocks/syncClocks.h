@@ -2,6 +2,8 @@
 
 #include <queue>
 #include <exception>
+#include <vector>
+#include <algorithm>
 
 #include "../time/getCurrentTime.h"
 #include "../../app/types/types.h"
@@ -16,7 +18,7 @@ namespace infra {
         public:
 
         static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 10;
-        static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 60;
+        static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 600;
         static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 600000;
 
         Receiver &_receiver;
@@ -46,6 +48,8 @@ namespace infra {
             infra::log("clock sync successful. commanding rx to enter torque angle mode");
 
             finish_clock_sync_mode();
+            
+            infra::log("leaving clock sync mode");
         }
 
         private:
@@ -76,7 +80,7 @@ namespace infra {
 
         app::timestamp calculate_trip_time() {
 
-            std::vector<RoundTrip> times;
+            std::vector<app::timestamp> times;
             int no_failure = 0;
 
             while (times.size() < NUMBER_MESSAGES_TO_TRANSMIT) {
@@ -88,18 +92,18 @@ namespace infra {
 
                 try {
                     app::timestamp response = wait_for_response();
+                    app::timestamp end_time = get_current_time();
 
                     if (response != start_time) {
                         log("calculate_trip_time -> received invalid response");
                         throw std::exception();
                     }
 
-                    app::timestamp end_time = get_current_time();
 
                     Serial.print("trip time took: ");
                     Serial.print(end_time - start_time);
 
-                    times.push_back(RoundTrip(start_time, end_time));
+                    times.push_back(end_time - start_time);
 
                 } catch (const std::exception & e) {
 
@@ -150,6 +154,8 @@ namespace infra {
 
                 _transmitter.send_message( app::sync_clock_message( current_time + average_trip_time) );
 
+                delay(TRANSMISSION_DELAY_MILLISECONDS);
+
             }
 
         }
@@ -166,21 +172,24 @@ namespace infra {
 
         }
 
-        app::timestamp calculate_average_trip_time( std::vector<RoundTrip> times){
+        app::timestamp calculate_average_trip_time( std::vector<app::timestamp> two_way_trip_times){
+            #define DATAPOINTS_TO_DISCARD 4
+            std::sort(two_way_trip_times.begin(), two_way_trip_times.end());
+
+            std::vector<app::timestamp> times(two_way_trip_times.size()-4);
+
+            std:copy(&two_way_trip_times[DATAPOINTS_TO_DISCARD/2], &two_way_trip_times[two_way_trip_times.size()-2], &times[0]);
 
             app::timestamp sum_trip_time = 0;
 
-            for (const auto time : times) {
-
-                auto trip_time = time.end_time - time.start_time;
+            for (const auto trip_time : times) {
 
                 sum_trip_time += trip_time;
             }
 
+            auto average_two_way_trip_time = sum_trip_time / times.size();
 
-            auto average_trip_time = sum_trip_time / times.size();
-
-            return average_trip_time / 2;
+            return average_two_way_trip_time / 2;
 
         }
 

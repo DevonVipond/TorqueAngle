@@ -26,6 +26,7 @@ namespace app {
 
     TorqueAngle __calculate_torque_angle(const timestamp &reference_point,    queue < timestamp > &terminal_voltage_zero_crossings,
                                          const timestamp &no_load_time_shift, const frequency &rotor_frequency) {
+        infra::log("starting torque angle calculation");
         
         timestamp time_shift;
         bool found_terminal_voltage_zero_crossing = false;
@@ -42,6 +43,8 @@ namespace app {
                 found_terminal_voltage_zero_crossing = true;
                 break;
             }
+            Serial.print("discarding calculated time shift: ");
+            Serial.println(time_shift);
 
         }
 
@@ -52,42 +55,42 @@ namespace app {
 
         auto time_shift_milliseconds = convert_microsecond_to_millisecond(time_shift);
 
-        TorqueAngle torque_angle = (90.0 / 4.0) * static_cast<double>(time_shift_milliseconds); //* static_cast<double>(rotor_frequency);
+        TorqueAngle torque_angle = (90.0 / 4.0) * static_cast<TorqueAngle>(time_shift_milliseconds) - static_cast<TorqueAngle>(no_load_time_shift); //* static_cast<double>(rotor_frequency);
 
         return torque_angle;
     }
 
-    TorqueAngle calculate_average_torque_angle( queue <timestamp> &reference_points,
-                                                queue <timestamp> &terminal_voltage_zero_crossings,
-                                                const timestamp &no_load_time_diff) {
+    //TorqueAngle calculate_average_torque_angle( queue <timestamp> &reference_points,
+    //                                            queue <timestamp> &terminal_voltage_zero_crossings,
+    //                                            const timestamp &no_load_time_diff) {
 
-        frequency rotor_frequency = __calculate_rotor_frequency(terminal_voltage_zero_crossings);
-        TorqueAngle sum_torque_angles = 0;
+    //    frequency rotor_frequency = __calculate_rotor_frequency(terminal_voltage_zero_crossings);
+    //    TorqueAngle sum_torque_angles = 0;
 
-        auto max_iteration = std::min(reference_points.size(), terminal_voltage_zero_crossings.size());
-        auto num_points = 0;
+    //    auto max_iteration = std::min(reference_points.size(), terminal_voltage_zero_crossings.size());
+    //    auto num_points = 0;
 
-        for (unsigned int i = 0; i < max_iteration; i++) {
-            timestamp reference = reference_points.front(); reference_points.pop();
-            timestamp zero_crossing = terminal_voltage_zero_crossings.front(); reference_points.pop();
+    //    for (unsigned int i = 0; i < max_iteration; i++) {
+    //        timestamp reference = reference_points.front(); reference_points.pop();
+    //        timestamp zero_crossing = terminal_voltage_zero_crossings.front(); reference_points.pop();
 
-            auto torque_angle = __calculate_torque_angle(reference, terminal_voltage_zero_crossings, no_load_time_diff, rotor_frequency);
+    //        auto torque_angle = __calculate_torque_angle(reference, terminal_voltage_zero_crossings, no_load_time_diff, rotor_frequency);
 
-            if (torque_angle) {
-                sum_torque_angles += torque_angle;
-                num_points++;
-            }
-        }
+    //        if (torque_angle) {
+    //            sum_torque_angles += torque_angle;
+    //            num_points++;
+    //        }
+    //    }
 
-        while (reference_points.size()) reference_points.pop();
-        while (terminal_voltage_zero_crossings.size()) terminal_voltage_zero_crossings.pop();
+    //    while (reference_points.size()) reference_points.pop();
+    //    while (terminal_voltage_zero_crossings.size()) terminal_voltage_zero_crossings.pop();
 
-        if (num_points == 0) return NULL;
+    //    if (num_points == 0) return NULL;
 
-        auto torque_angle = sum_torque_angles / num_points;
+    //    auto torque_angle = sum_torque_angles / num_points;
 
-        return torque_angle;
-    }
+    //    return torque_angle;
+    //}
 
     //timestamp find_nearest_zero_crossing(const timestamp& reference_point, queue < timestamp > &terminal_voltage_zero_crossings) {
     //    while (terminal_voltage_zero_crossings.size()) {

@@ -73,6 +73,7 @@ void setupTransmitter() {
     // Register for a callback function that will be called when data is received
     esp_now_register_recv_cb(message_received_callback);
     esp_now_register_send_cb(message_sent_callback);
+    number_bolts = infra::read_number_bolts();;
     //try {
 
     //    Serial.begin(115200);
@@ -105,6 +106,7 @@ void setupTransmitter() {
 
 
 unsigned int bolts_counter = 0;
+unsigned int sync_clock_counter = 0;
 void loopTransmitter() {
     while (1) {
         try {
@@ -119,6 +121,9 @@ void loopTransmitter() {
 
                 mode = app::TORQUE_ANGLE_MODE;
 
+
+                delayMicroseconds(100);
+
             } else if (mode == app::TORQUE_ANGLE_MODE) {
 
                 auto rising_edge_timestamp = infra::wait_for_rising_edge(app::SENSOR_PIN);
@@ -126,7 +131,15 @@ void loopTransmitter() {
                 bolts_counter = (bolts_counter + 1) % number_bolts;
 
                 if (bolts_counter == 0) {
+                    Serial.println("sending rising edge timestamp");
                     transmitter.send_message( app::sensor_timestamp_message(rising_edge_timestamp) );
+                }
+
+                if (sync_clock_counter >= 1000) {
+
+                    sync_clock_counter = 0;
+                    mode = app::SYNC_CLOCK_MODE;
+
                 }
 
                 delayMicroseconds(10);
