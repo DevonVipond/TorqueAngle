@@ -49,6 +49,7 @@ void update_torque_angle() {
     //auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_zero_crossings_buffer, no_load_time_shift);
     try {
         auto reference_point = receiver_buffer.front(); receiver_buffer.pop();
+        while (receiver_buffer.size()) receiver_buffer.pop();
         auto torque_angle = app::__calculate_torque_angle(reference_point,
                                         terminal_voltage_zero_crossings_buffer,
                                         no_load_time_shift,
@@ -146,11 +147,11 @@ void message_handler(app::message & msg) {
         throw std::exception();
     }
 
-    Serial.print("rx: received msg w payload: ");
-    Serial.print(msg.payload);
-    Serial.print(", type: ");
-    Serial.println(msg_type_to_string(msg.message_type).c_str());
-    Serial.println(msg.message_type);
+    //Serial.print("rx: received msg w payload: ");
+    //Serial.print(msg.payload);
+    //Serial.print(", type: ");
+    //Serial.println(msg_type_to_string(msg.message_type).c_str());
+    //Serial.println(msg.message_type);
 
 
 }
@@ -226,7 +227,7 @@ void loopReciever() {
 
                 terminal_voltage_zero_crossings_buffer.push(zero_crossing_timestamp);
 
-                if ( receiver_buffer.size() )
+                if ( receiver_buffer.size() > 50 )
                     update_torque_angle();
             }
             else {

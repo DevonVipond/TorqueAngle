@@ -121,7 +121,6 @@ void loopTransmitter() {
 
                 mode = app::TORQUE_ANGLE_MODE;
 
-
                 delayMicroseconds(100);
 
             } else if (mode == app::TORQUE_ANGLE_MODE) {
@@ -135,14 +134,15 @@ void loopTransmitter() {
                     transmitter.send_message( app::sensor_timestamp_message(rising_edge_timestamp) );
                 }
 
-                if (sync_clock_counter >= 1000) {
+                sync_clock_counter++;
+                if (sync_clock_counter >= 10000) {
 
                     sync_clock_counter = 0;
-                    mode = app::SYNC_CLOCK_MODE;
+                    mode = app::SYNC_CLOCKS_MODE;
 
                 }
 
-                delayMicroseconds(10);
+                delayMicroseconds(25);
             }
 
         } catch (std::exception e) {

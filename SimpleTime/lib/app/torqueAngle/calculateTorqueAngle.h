@@ -13,13 +13,13 @@
 using namespace std;
 
 namespace app {
-    #define MAX_TORQUE_ANGLE = 90;
-    #define MAX_TIME_SHIFT_MICROSECONDS 4000
-    #define MICROSECONDS_IN_MILLISECOND 1000
+    #define MAX_TORQUE_ANGLE = 90.0
+    #define MAX_TIME_SHIFT_MICROSECONDS 4000.0 + 1000.0
+    #define MICROSECONDS_IN_MILLISECOND 1000.0
 
-    app::timestamp convert_microsecond_to_millisecond(const app::timestamp& microsecond_timestmap) {
+    double convert_microsecond_to_millisecond(const app::timestamp& microsecond_timestmap) {
 
-        return microsecond_timestmap / MICROSECONDS_IN_MILLISECOND;
+        return static_cast<double>(microsecond_timestmap) / MICROSECONDS_IN_MILLISECOND;
 
     }
 
@@ -53,7 +53,7 @@ namespace app {
             throw app::CalculationFailed();
         } 
 
-        auto time_shift_milliseconds = convert_microsecond_to_millisecond(time_shift);
+        double time_shift_milliseconds = convert_microsecond_to_millisecond(time_shift);
 
         TorqueAngle torque_angle = (90.0 / 4.0) * static_cast<TorqueAngle>(time_shift_milliseconds) - static_cast<TorqueAngle>(no_load_time_shift); //* static_cast<double>(rotor_frequency);
 
