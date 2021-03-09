@@ -31,7 +31,7 @@ namespace infra {
 
         void start(){
 
-            infra::log("starting syncclocks");
+            infra::log("commanding rx to enter sync clocks mode");
 
             initiate_sync_clock_mode();
 
@@ -39,11 +39,11 @@ namespace infra {
 
             app::timestamp average_trip_time = calculate_trip_time();
 
-            infra::log("sending sync clock message");
+            infra::log("commanding rx to sync his clock to my clock");
 
             send_clock_sync_messages(average_trip_time);
 
-            infra::log("finishing sync clock mode");
+            infra::log("clock sync successful. commanding rx to enter torque angle mode");
 
             finish_clock_sync_mode();
         }
@@ -80,25 +80,37 @@ namespace infra {
             int no_failure = 0;
 
             while (times.size() < NUMBER_MESSAGES_TO_TRANSMIT) {
+                infra::log("calculate_trip_time -> sending round trip message");
                 
                 auto start_time = get_current_time();
 
                 _transmitter.send_message( round_trip_message(start_time) );
 
-                app::timestamp response = wait_for_response();
-                app::timestamp end_time = get_current_time();
+                try {
+                    app::timestamp response = wait_for_response();
 
-                if (!response || response != start_time) {
+                    if (response != start_time) {
+                        log("calculate_trip_time -> received invalid response");
+                        throw std::exception();
+                    }
+
+                    app::timestamp end_time = get_current_time();
+
+                    times.push_back(RoundTrip(start_time, end_time));
+
+                } catch (const std::exception & e) {
+
                     no_failure++;
-                    continue;
+
+                    if (no_failure >= NUMBER_MESSAGES_TO_TRANSMIT) {
+                        log("failed to calc trip time due to max no error msg's exceeded");
+                        throw std::exception();
+                    }
+
+                    infra::log("failed to calculate trip time. retrying");
+
                 }
 
-                times.push_back(RoundTrip(start_time, end_time));
-
-                if (no_failure == NUMBER_MESSAGES_TO_TRANSMIT) {
-                    log("failed to calc trip time due to max no error msg's exceeded");
-                    throw std::exception();
-                }
 
                 delay(TRANSMISSION_DELAY_MILLISECONDS);
             }
@@ -122,7 +134,8 @@ namespace infra {
                 }
             }
 
-            return NULL;
+            infra::log("wait_for_response -> timeout exceeded");
+            throw std::exception();
 
         }
 

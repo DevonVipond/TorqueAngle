@@ -19,7 +19,6 @@ namespace infra {
         bool _initialized;
         const uint8_t* _broadcast_addr;
 
-        // ESP protocol is initialized when needed (lazy initialization)
         void __init(const uint8_t *broadcast_addr) {
             _broadcast_addr = broadcast_addr;
 
@@ -30,7 +29,7 @@ namespace infra {
 
             // Add peer
             if (esp_now_add_peer(&peerInfo) != ESP_OK){
-                log("Failed to add peer!");
+                log("ESPNowTransmitter::__init -> Failed to add peer!");
                 throw ConnectionFailed();
             }
 
@@ -56,7 +55,7 @@ namespace infra {
 
         void send_message(PayloadType payload) {
             if (!_initialized) {
-                log("transmitter not initialized!");
+                log("ESPNowTransmitter::send_message -> transmitter not initialized!");
                 throw ConnectionFailed();
             }
 
