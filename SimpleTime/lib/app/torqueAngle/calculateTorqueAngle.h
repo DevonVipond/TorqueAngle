@@ -49,11 +49,17 @@ namespace app {
 
 
     TorqueAngle __calculate_torque_angle(const timestamp &reference_point, const std::vector < timestamp > &zero_crossings, const timestamp &no_load_time_shift) {
+        Serial.print("my time shift is");
+        Serial.println(no_load_time_shift);
 
         timestamp min_time_shift = 5000;
         for (timestamp crossing : zero_crossings) {
+            
+            timestamp shift =  __calculate_time_shift(reference_point, crossing);
 
-             min_time_shift = std::min(min_time_shift, __calculate_time_shift(reference_point, crossing));
+            shift = __calculate_time_shift(shift, no_load_time_shift);
+
+            min_time_shift = std::min(min_time_shift, shift);
 
         }
 
@@ -67,7 +73,7 @@ namespace app {
 
         double time_shift_milliseconds = convert_microsecond_to_millisecond(min_time_shift);
 
-        TorqueAngle torque_angle = (90.0 / 4.0) * ( static_cast<TorqueAngle>(time_shift_milliseconds) - static_cast<TorqueAngle>(no_load_time_shift) ); //* static_cast<double>(rotor_frequency);
+        TorqueAngle torque_angle = (90.0 / 4.0) * ( static_cast<TorqueAngle>(time_shift_milliseconds) ); //* static_cast<double>(rotor_frequency);
 
         return torque_angle;
     }

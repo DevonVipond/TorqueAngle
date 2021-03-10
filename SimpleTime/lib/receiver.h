@@ -32,6 +32,35 @@ app::timestamp no_load_time_shift = 0;
 using namespace app;
 using namespace infra;
 
+void zero_torque_angle() {
+
+    timestamp reference_point = receiver_buffer.front(); receiver_buffer.pop();
+    while (receiver_buffer.size()) receiver_buffer.pop();
+    std::vector<timestamp> zero_crossing_vec;
+
+    while (terminal_voltage_zero_crossings_buffer.size()) {
+
+        zero_crossing_vec.push_back(terminal_voltage_zero_crossings_buffer.front());
+
+        terminal_voltage_zero_crossings_buffer.pop();
+
+    }
+
+    timestamp min_time_shift = std::numeric_limits<timestamp>::max();
+
+    for (timestamp zero_crossing : zero_crossing_vec) {
+
+        min_time_shift = std::min(min_time_shift, __calculate_time_shift(zero_crossing, reference_point));
+
+    }
+
+    no_load_time_shift = min_time_shift;
+
+    Serial.print("zeroed torque angle with timeshift: ");
+    Serial.println(no_load_time_shift);
+
+}
+
 void message_sent_callback(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -64,15 +93,13 @@ void update_torque_angle() {
         for (timestamp reference_point : receiver_vec) {
 
             try {
+
                 auto torque_angle = app::__calculate_torque_angle(reference_point, zero_crossing_vec, no_load_time_shift);
                 display_torque_angle(torque_angle);
 
                 return;
 
             } catch (std::exception e) {
-
-                //Serial.print("Exception in update_torque_angle ");
-                //Serial.println(e.what());
 
             }
 
@@ -81,7 +108,7 @@ void update_torque_angle() {
 
     } catch (std::exception &e) {
 
-        Serial.print("Exception with reading buffers");
+        Serial.print("Exception with calculating torque angle ");
         Serial.println(e.what());
 
         return; 
@@ -200,6 +227,8 @@ void setupReciever() {
 
     Serial.begin(115200);
 
+    pinMode(app::ZERO_TORQUE_ANGLE_PIN, INPUT);
+
     uint8_t broadcastAddress[] = { 0x3c,0x61,0x05,0x3e,0xee,0xa4 };
 
     WiFi.mode(WIFI_STA);
@@ -259,7 +288,11 @@ void loopReciever() {
 
                 terminal_voltage_zero_crossings_buffer.push(zero_crossing_timestamp);
 
-                if ( receiver_buffer.size() > 200 && terminal_voltage_zero_crossings_buffer.size() > 200)
+                if (digitalRead(app::ZERO_TORQUE_ANGLE_PIN) == 1 && terminal_voltage_zero_crossings_buffer.size() > 20) {
+                    zero_torque_angle();
+                }
+
+                if ( receiver_buffer.size() > 40 && terminal_voltage_zero_crossings_buffer.size() > 40)
                     update_torque_angle();
             }
             else {
@@ -279,43 +312,6 @@ void loopReciever() {
 
 
 }
-
-/*
-void zero_torque_angle() {
-    app::timestamp reference_point;
-
-    try {
-
-       reference_point = wait_for_next_packet(receiver_buffer);
-
-    } catch (std::exception e) {
-
-        infra::log("unable to zero torque angle!");
-
-    }
-
-    std::vector<app::timestamp> vec;
-    while (!terminal_voltage_zero_crossings_buffer.empty()) {
-
-        vec.push_back(terminal_voltage_zero_crossings_buffer.front());
-        terminal_voltage_zero_crossings_buffer.pop();
-    }
-
-    auto min_time_shift = std::min_element(vec.begin(), vec.end(), [&](const timestamp& a, const timestamp& b) {
-
-        app::timestamp time_shift_a = app::__calculate_time_shift(a, reference_point);
-        app::timestamp time_shift_b = app::__calculate_time_shift(b, reference_point);
-
-        return std::min(time_shift_a, time_shift_b);
-    });
-
-    no_load_time_shift = *min_time_shift;
-
-    Serial.print("zeroed torque angle with timeshift: ");
-    Serial.println(no_load_time_shift);
-
-}
-*/
 
 };
 

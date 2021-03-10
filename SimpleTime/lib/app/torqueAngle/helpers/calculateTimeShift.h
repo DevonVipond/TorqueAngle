@@ -8,6 +8,6 @@
 namespace app {
     timestamp __calculate_time_shift(timestamp t1, timestamp t2) {
 
-        return std::abs(t1 - t2);
+        return static_cast<timestamp>(std::abs(static_cast<double>(t1) - static_cast<double>(t2)));
     }
 }
