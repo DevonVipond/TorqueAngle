@@ -43,8 +43,8 @@ namespace app {
                 found_terminal_voltage_zero_crossing = true;
                 break;
             }
-            Serial.print("discarding calculated time shift: ");
-            Serial.println(time_shift);
+            //Serial.print("discarding calculated time shift: ");
+            //Serial.println(time_shift);
 
         }
 

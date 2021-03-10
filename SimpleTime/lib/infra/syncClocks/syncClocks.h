@@ -11,6 +11,24 @@
 #include "../logger/logger.h"
 
 namespace infra {
+    template <typename T> 
+    class Statistics {
+        public:
+        std::vector<T> remove_outliers( std::vector<T> data_set,  size_t datapoints_to_discard) {
+            auto number_data_points = data_set.size();
+            auto lower_bound = datapoints_to_discard / 2;
+            auto upper_bound = number_data_points - (datapoints_to_discard / 2);
+
+            std::sort(data_set.begin(), data_set.end());
+
+            std::vector<T> ret(number_data_points - datapoints_to_discard);
+
+            std:copy(&data_set[lower_bound], &data_set[upper_bound], &ret[0]);
+
+            return ret;
+        }
+
+    };
 
     template< typename Receiver, typename Transmitter >
     class SyncClocks {
@@ -19,7 +37,7 @@ namespace infra {
 
         static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 10;
         static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 600;
-        static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 600000;
+        static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 9000;
 
         Receiver &_receiver;
         Transmitter &_transmitter;
@@ -173,14 +191,10 @@ namespace infra {
         }
 
         app::timestamp calculate_average_trip_time( std::vector<app::timestamp> two_way_trip_times){
-            #define DATAPOINTS_TO_DISCARD 4
-            std::sort(two_way_trip_times.begin(), two_way_trip_times.end());
-
-            std::vector<app::timestamp> times(two_way_trip_times.size()-4);
-
-            std:copy(&two_way_trip_times[DATAPOINTS_TO_DISCARD/2], &two_way_trip_times[two_way_trip_times.size()-2], &times[0]);
-
             app::timestamp sum_trip_time = 0;
+            Statistics<app::timestamp> s;
+
+            std::vector<app::timestamp> times = s.remove_outliers(two_way_trip_times, 4);
 
             for (const auto trip_time : times) {
 
@@ -192,6 +206,7 @@ namespace infra {
             return average_two_way_trip_time / 2;
 
         }
+
 
     };
 }

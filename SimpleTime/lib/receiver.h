@@ -75,9 +75,19 @@ void zero_torque_angle(app::timestamp no_load_time_shift) {
 
 }
 
-void set_clock_offset(const app::timestamp &transmitter_clock) {
 
-    g_clock_offset = static_cast<long int>(transmitter_clock) - static_cast<long int>(micros());
+void set_clock_offset(const std::vector<long int> &clock_offsets) {
+    infra::Statistics<long int> s;
+
+    std::vector<long int> filtered_offsets = s.remove_outliers(clock_offsets, 4);
+
+    long int sum = 0;
+
+    for (long int it : filtered_offsets) {
+        sum += it;
+    }
+
+    g_clock_offset = sum / static_cast<long int>(filtered_offsets.size());
 
     Serial.print("clock syncd w offset: ");
     Serial.println(g_clock_offset);
@@ -101,6 +111,8 @@ std::string msg_type_to_string(app::MESSAGE_TYPE type) {
     return "undefined type!";
 }
 
+std::vector<long int> clock_offsets;
+
 void message_handler(app::message & msg) {
     auto message_type = msg.message_type;
     if (msg.message_type == app::ENTER_SYNC_CLOCKS_MODE_MSG) {
@@ -111,6 +123,11 @@ void message_handler(app::message & msg) {
     } else if (message_type == app::ENTER_TORQUE_ANGLE_MODE_MSG)  {
 
         mode = app::TORQUE_ANGLE_MODE;
+        if (clock_offsets.size()) {
+            set_clock_offset(clock_offsets);
+            clock_offsets.clear();
+
+        }
         while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
         while (receiver_buffer.size()) receiver_buffer.pop();
 
@@ -129,7 +146,8 @@ void message_handler(app::message & msg) {
             throw std::exception();
         }
 
-        set_clock_offset(msg.payload);
+        long int offset = static_cast<long int>(msg.payload) - static_cast<long int>(micros());
+        clock_offsets.push_back(offset);
 
         Serial.print("Syncing clock to: ");
         Serial.println(msg.payload);
