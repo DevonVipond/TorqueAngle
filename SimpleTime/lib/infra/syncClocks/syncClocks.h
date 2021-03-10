@@ -36,7 +36,7 @@ namespace infra {
         public:
 
         static const app::timestamp NUMBER_MESSAGES_TO_TRANSMIT = 10;
-        static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 600;
+        static const app::timestamp TRANSMISSION_DELAY_MILLISECONDS = 400;
         static const app::timestamp RESPONSE_TIMEOUT_MICROSECONDS = 9000;
 
         Receiver &_receiver;

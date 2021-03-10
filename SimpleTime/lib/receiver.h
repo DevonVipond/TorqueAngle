@@ -2,6 +2,7 @@
 
 #include <queue>
 #include <memory>
+#include <vector>
 
 #include "app/types/types.h"
 #include "app/globalVariables/globalVariables.h"
@@ -46,32 +47,45 @@ void display_torque_angle(app::TorqueAngle torque_angle) {
 
 void update_torque_angle() {
 
-    //auto torque_angle = app::calculate_average_torque_angle(receiver_buffer, terminal_voltage_zero_crossings_buffer, no_load_time_shift);
     try {
-        auto reference_point = receiver_buffer.front(); receiver_buffer.pop();
-        while (receiver_buffer.size()) receiver_buffer.pop();
-        auto torque_angle = app::__calculate_torque_angle(reference_point,
-                                        terminal_voltage_zero_crossings_buffer,
-                                        no_load_time_shift,
-                                        ROTOR_FREQUENCY);
+
+        std::vector<timestamp> receiver_vec;
+        std::vector<timestamp> zero_crossing_vec;
+
+        while (receiver_buffer.size()) {
+            receiver_vec.push_back(receiver_buffer.front());
+            receiver_buffer.pop();
+        }
+        while (terminal_voltage_zero_crossings_buffer.size()) {
+            zero_crossing_vec.push_back(terminal_voltage_zero_crossings_buffer.front());
+            terminal_voltage_zero_crossings_buffer.pop();
+        }
+
+        for (timestamp reference_point : receiver_vec) {
+
+            try {
+                auto torque_angle = app::__calculate_torque_angle(reference_point, zero_crossing_vec, no_load_time_shift);
+                display_torque_angle(torque_angle);
+
+                return;
+
+            } catch (std::exception e) {
+
+                //Serial.print("Exception in update_torque_angle ");
+                //Serial.println(e.what());
+
+            }
 
 
-        display_torque_angle(torque_angle);
-    } catch (const std::exception& e) {
+        }
 
-        Serial.print("Exception in update_torque_angle ");
+    } catch (std::exception &e) {
+
+        Serial.print("Exception with reading buffers");
         Serial.println(e.what());
 
+        return; 
     }
-
-
-    //while (terminal_voltage_zero_crossings_buffer.size()) terminal_voltage_zero_crossings_buffer.pop();
-    //while (receiver_buffer.size()) receiver_buffer.pop();
-}
-
-void zero_torque_angle(app::timestamp no_load_time_shift) {
-
-    no_load_time_shift = no_load_time_shift;
 
 }
 
@@ -245,7 +259,7 @@ void loopReciever() {
 
                 terminal_voltage_zero_crossings_buffer.push(zero_crossing_timestamp);
 
-                if ( receiver_buffer.size() > 50 )
+                if ( receiver_buffer.size() > 200 && terminal_voltage_zero_crossings_buffer.size() > 200)
                     update_torque_angle();
             }
             else {
@@ -266,4 +280,43 @@ void loopReciever() {
 
 }
 
+/*
+void zero_torque_angle() {
+    app::timestamp reference_point;
+
+    try {
+
+       reference_point = wait_for_next_packet(receiver_buffer);
+
+    } catch (std::exception e) {
+
+        infra::log("unable to zero torque angle!");
+
+    }
+
+    std::vector<app::timestamp> vec;
+    while (!terminal_voltage_zero_crossings_buffer.empty()) {
+
+        vec.push_back(terminal_voltage_zero_crossings_buffer.front());
+        terminal_voltage_zero_crossings_buffer.pop();
+    }
+
+    auto min_time_shift = std::min_element(vec.begin(), vec.end(), [&](const timestamp& a, const timestamp& b) {
+
+        app::timestamp time_shift_a = app::__calculate_time_shift(a, reference_point);
+        app::timestamp time_shift_b = app::__calculate_time_shift(b, reference_point);
+
+        return std::min(time_shift_a, time_shift_b);
+    });
+
+    no_load_time_shift = *min_time_shift;
+
+    Serial.print("zeroed torque angle with timeshift: ");
+    Serial.println(no_load_time_shift);
+
+}
+*/
+
 };
+
+
