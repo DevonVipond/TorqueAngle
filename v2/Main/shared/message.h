@@ -1,11 +1,15 @@
 #pragma once
 
+#include "../shared/types.h"
+using namespace types;
+
 namespace shared
 {
     class Message
     {
     public:
         Message(char type, timestamp payload): _type(type), _payload(payload) {}
+        Message() {}
         enum MESSAGE_TYPES
         {
             START_CLOCK_SYNC,

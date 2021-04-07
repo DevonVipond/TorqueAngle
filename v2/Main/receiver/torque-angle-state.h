@@ -46,7 +46,8 @@ namespace receiver
         {
             try
             {
-                log("Torque Angle: ", _calculator.calculate(std::move(_referencePoints), std::move(_zeroCrossings)));
+                auto torqueAngle = _calculator.calculate(std::move(_referencePoints), std::move(_zeroCrossings));
+                log(torqueAngle);
             }
             catch (std::exception)
             {
@@ -67,7 +68,7 @@ namespace receiver
     public:
         TorqueAngleState(Clock &clock) : _terminalVoltageReader(clock, TERMINAL_VOLTAGE_PIN),
                                                                       _zeroTorqueAngleReader(clock, ZERO_TORQUE_ANGLE_PIN),
-                                                                      _calculator(),
+                                                                      _calculator()
         {
         }
         TorqueAngleState() = delete;
@@ -85,7 +86,7 @@ namespace receiver
                 _referencePoints.push_back(message.payload());
                 break;
             default:
-                log("Unknown message: ", message.type());
+                log("clock-sync-state: Unknown message");
             };
         }
 

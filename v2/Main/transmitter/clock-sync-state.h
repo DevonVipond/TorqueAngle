@@ -3,6 +3,7 @@
 #include "./torque-angle-state.h"
 #include "./clock-sync-state.h"
 #include "../shared/message.h"
+#include "../shared/types.h"
 #include "../shared/communication-channel.h"
 
 using namespace types;
@@ -16,6 +17,7 @@ namespace transmitter
     static const unsigned int RESPONSE_TIMEOUT_MICROSECONDS = 5000;
     class EnterClockSyncMode
     {
+    public:
         void execute(const CommunicationChannel &communicationChannel)
         {
             for (auto i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++)
@@ -30,6 +32,7 @@ namespace transmitter
 
     class LeaveClockSyncMode
     {
+    public:
         void execute(const CommunicationChannel &communicationChannel)
         {
             for (auto i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++)
@@ -44,7 +47,7 @@ namespace transmitter
 
     class DetermineRoundTripTime
     {
-    private:
+    public:
         static const unsigned int RTT_SAMPLE_SIZE = 20;
 
         timestamp calculateRTT(CommunicationChannel &communicationChannel, const Clock &clock)
@@ -53,7 +56,7 @@ namespace transmitter
 
             auto startTime = clock.currentTime();
 
-            communicationChannel.sendMessage(Message(Message::MESSAGE_TYPE::PING, startTime));
+            communicationChannel.sendMessage(Message(Message::MESSAGE_TYPES::PING, startTime));
 
             try
             {
@@ -91,16 +94,17 @@ namespace transmitter
             return roundTripTimes[mid];
         }
 
-        void execute(CommunicationChannel &communicationChannel, const Clock &clock) const
+        timestamp execute(CommunicationChannel &communicationChannel, const Clock &clock)
         {
 
             std::vector<timestamp> roundTripTimes;
 
-            auto shouldPing = [&roundTripTimes]() { return roundTripTimes.size() < RTT_SAMPLE_SIZE };
+            auto shouldPing = [&roundTripTimes]() { return roundTripTimes.size() < RTT_SAMPLE_SIZE; };
 
             while (shouldPing())
             {
-                auto rtt = calculateRTT(communicationChannel);
+                auto rtt = calculateRTT(communicationChannel, clock);
+
                 roundTripTimes.push_back(rtt);
 
                 delay(TRANSMISSION_DELAY_MILLISECONDS);
@@ -112,7 +116,8 @@ namespace transmitter
 
     class SyncReceiver
     {
-        void execute(timestamp expectedRTT, CommunicationChannel &communicationChannel, const Clock &clock))
+    public:
+        void execute(timestamp expectedRTT, CommunicationChannel &communicationChannel, const Clock &clock)
         {
             for (int i = 0; i < NUMBER_MESSAGES_TO_TRANSMIT; i++)
             {
@@ -127,31 +132,30 @@ namespace transmitter
         }
     };
 
-    class ClockSyncState 
+    class ClockSyncState
     {
 
     public:
         ClockSyncState() = delete;
-        ClockSyncState(const CommunicationChannel &communicationChannel) : _communicationChannel(communicationChannel)
+        ClockSyncState(Clock &clock, CommunicationChannel &communicationChannel) : _communicationChannel(communicationChannel),
+                                                                                   _clock(clock)
         {
         }
 
         void start()
         {
-            Clock clock;
-
             log("Commanding rx to enter sync clocks mode");
             EnterClockSyncMode cmd1;
             cmd1.execute(_communicationChannel);
 
             log("Calculating trip time");
             DetermineRoundTripTime cmd2;
-            timestamp averageRTT = cmd2.execute(_communicationChannel, clock);
+            timestamp averageRTT = cmd2.execute(_communicationChannel, _clock);
 
             log("Commanding rx to sync his clock to my clock");
 
             SyncReceiver cmd3;
-            cmd3.execute(averageRTT, _communicationChannel, clock);
+            cmd3.execute(averageRTT, _communicationChannel, _clock);
 
             log("Clock sync successful. Commanding rx to enter torque angle mode");
 
@@ -163,6 +167,6 @@ namespace transmitter
 
     private:
         CommunicationChannel &_communicationChannel;
+        Clock &_clock;
     };
-}
 }

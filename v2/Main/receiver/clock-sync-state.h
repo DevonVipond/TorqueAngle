@@ -23,9 +23,9 @@ namespace receiver
     public:
         ClockSyncer(Clock &clock) : _clock(clock) {}
 
-        addClockOffset(timestmap offset) { _clockOffsets.push_back(offset); }
+        void addClockOffset(timestamp offset) { _clockOffsets.push_back(offset); }
 
-        sync()
+        void sync()
         {
             if (_clockOffsets.empty())
                 return;
@@ -39,13 +39,13 @@ namespace receiver
             _clockOffsets.clear();
         }
 
-    }
+    };
 
     class ClockSyncState : public State
     {
     private:
         const CommunicationChannel &_communicationChannel;
-        ClockSyncer &_clockSyncer;
+        ClockSyncer _clockSyncer;
 
         void setup()
         {
@@ -75,10 +75,10 @@ namespace receiver
                 _communicationChannel.sendMessage(message);
                 break;
             case MT::SYNC_CLOCK_MESSAGE:
-                _clockSycner.addClockOffset(static_cast<long int>(msg.payload()) - static_cast<long int>(micros()));
+                _clockSyncer.addClockOffset(static_cast<long int>(message.payload()) - static_cast<long int>(micros()));
                 break;
             default:
-                log("Unknown message: ", message.type());
+                log("Unknown message: ");
             };
         }
 

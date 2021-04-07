@@ -20,7 +20,7 @@ namespace shared
         }
         void setOffset(timestamp offset)
         {
-            _clockOffset = offset
+            _clockOffset = offset;
         }
 
         timestamp currentTime() const

@@ -34,7 +34,7 @@ namespace receiver
             return calculateTimeShift(zeroCrossings[index-1], referencePoint);
         }
 
-        double convertTimeShiftToTorqueAngle(timeshift timeShift) {
+        double convertTimeShiftToTorqueAngle(timestamp timeShift) {
             return (90.0 / 4000.0) * static_cast<double>(timeShift);
         }
 
@@ -44,7 +44,7 @@ namespace receiver
             log("zeroTorqueAngle coming soon!");
         }
 
-        double calculate(std::vector<timestamp> referencePoints, std::vector<timestamp> zeroCrossings)
+        double calculate(std::vector<timestamp> &&referencePoints, std::vector<timestamp> &&zeroCrossings)
         {
             timestamp minTimeShift = std::numeric_limits<timestamp>::max();
             for (const timestamp &point : referencePoints)
@@ -61,6 +61,6 @@ namespace receiver
 
             return convertTimeShiftToTorqueAngle(minTimeShift);
         }
-    }
+    };
 
-};
+}

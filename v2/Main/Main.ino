@@ -1,15 +1,11 @@
-#include "Serial"
 
 #include "receiver/receiver.h"
 #include "transmitter/transmitter.h"
 
-void setup() {
-    Serial.begin(115200);
-
-}
+void setup() {}
 
 void loop()
 {
     transmitter::start();
-    receiver::start();
+    //   receiver::start();
 }

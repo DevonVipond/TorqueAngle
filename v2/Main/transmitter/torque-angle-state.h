@@ -8,6 +8,7 @@
 #include "../shared/gpio-reader.h"
 #include "../shared/communication-channel.h"
 #include "../shared/message.h"
+#include "../shared/observable.h"
 
 using namespace types;
 using namespace shared;
@@ -20,7 +21,7 @@ namespace transmitter
     class TorqueAngleState : public State
     {
     private:
-        static const unsigned int STATE_LIFETIME_MICROSECONDS;
+        static const unsigned int STATE_LIFETIME_MICROSECONDS = 1000 * 1000 * 60 * 2;
         Clock &_clock;
         CommunicationChannel &_comms;
 
@@ -46,12 +47,12 @@ namespace transmitter
 
         void handle_message(Message message)
         {
-            log("Received unkown message: ", message.payload());
+            log("Received unkown message: ");
         }
 
         void stop()
         {
-            State::is_running = false;
+            State::_is_running = false;
         }
 
         void start()
@@ -63,7 +64,7 @@ namespace transmitter
 
             auto startTime = _clock.currentTime();
 
-            while (State::is_running)
+            while (State::_is_running)
             {
                 try
                 {
@@ -83,6 +84,11 @@ namespace transmitter
                         stop();
                     }
                 }
+                catch (std::exception e)
+                {
+                    log("exception in torque-angle-state: ", e.what());
+                }
             }
-        }
-    }
+        };
+    };
+}
